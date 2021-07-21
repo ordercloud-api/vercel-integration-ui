@@ -166,7 +166,7 @@ const Signup = (props: SignupProps) => {
         } finally {
           setSubmitting(false);
         }
-        var resp = await Auth.login(values.Username, values.Password);
+        var resp = await Auth.Login(values.Username, values.Password);
         props.onAuthenticate(resp);
       }}
     >
