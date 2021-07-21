@@ -1,0 +1,21 @@
+.heading {
+  @apply text-5xl pt-1 pb-2 font-semibold tracking-wide cursor-pointer mb-2;
+}
+
+.pageHeading {
+  @apply pt-1 pb-4 text-2xl leading-7 font-bold tracking-wide;
+}
+
+.sectionHeading {
+  @apply mb-2;
+  color: #202223;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.body {
+  font-size: 14px;
+  line-height: 20px;
+  color: #202223;
+}

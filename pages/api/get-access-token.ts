@@ -1,4 +1,4 @@
-import qs from 'querystring'
+import * as qs from 'querystring'
 
 /**
  * This endpoint can be only called once

@@ -1,5 +1,6 @@
-import Layout from 'components/layout'
+import Layout from '../components/common/layout'
 import { useRouter } from 'next/router'
+import * as React from "react";
 
 // The URL of this page should be added as Configuration URL in your integration settings on Vercel
 export default function Configure() {

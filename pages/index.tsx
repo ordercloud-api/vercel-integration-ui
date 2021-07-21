@@ -1,4 +1,6 @@
-import Layout from 'components/layout'
+import Layout from '../components/common/layout'
+import * as React from "react";
+
 
 export default function Index() {
   return (
