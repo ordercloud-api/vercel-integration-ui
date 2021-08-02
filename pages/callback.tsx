@@ -9,6 +9,7 @@ import LoginView from '../components/common/LoginView';
 import RegisterView from '../components/common/RegisterView';
 import { PortalAuthentication } from '@ordercloud/portal-javascript-sdk/dist/models/PortalAuthentication';
 import ForgotPasswordView from '../components/common/ForgotPasswordView';
+import SeedingView from '../components/common/Seeding';
 
 export type View = 'SPLASH_PAGE' | 'REGISTER' | 'LOGIN' | 'FORGOT_PASS' | 'SEEDING'
 
@@ -17,6 +18,8 @@ export default function CallbackPage() {
   const [vercelToken, setVercelToken] = useState<VercelTokenContext>({})
   const [ocToken, setOCToken] = useState<PortalAuthentication>(null)
   const [vercelProjects, setVercelProjects] = useState<VercelProject[]>()
+  const [logs, setLogs] = useState<string[]>([]);
+  const [seedPageText, setSeedPageText] = useState<string>("We are creating your storefront!");
   const [view, setView] = useState<View>('SPLASH_PAGE')
 
   useEffect(() => {
@@ -59,7 +62,24 @@ export default function CallbackPage() {
   const onAuthenticate = async (auth: PortalAuthentication) => {
     setOCToken(auth);
     setView('SEEDING');
+    const res = await fetch(`/api/seed-organization?ocToken=${auth.access_token}`);
+    console.log(res.body)
+    if (res.status >= 400) {
+      setSeedPageText("Sorry, something failed during setup. Close the window and try again.")
+    } else {
+      backToVercel();
+    }
+
   }
+
+  const addLog = (message: string) => {
+    setLogs(oldLogs => [...oldLogs, message]);
+  }
+
+  const backToVercel = () => {
+    router.push(router.query.next as any)
+  }
+
 
   return (
     <Layout>
@@ -74,7 +94,7 @@ export default function CallbackPage() {
         <ForgotPasswordView setView={setView} />
       )}
       {view === 'SEEDING' && (
-        <div>Seeding {ocToken?.access_token}</div>
+        <SeedingView logs={logs} text={seedPageText}/>
       )}
     </Layout>
   )
