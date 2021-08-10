@@ -12,6 +12,9 @@ import { Text } from '../vercel-ui';
     var rows = props.logs.map(log => {
          return (
             <div style={{
+                textAlign: 'left',
+                fontFamily: 'Consolas,Lucida Console,Courier New,monospace',
+                fontSize: '15px',
                 position: 'relative',
                 display: 'flex',
                 color: 'white',
@@ -40,11 +43,11 @@ import { Text } from '../vercel-ui';
     return (
       <WideAuthContainer>
          <Text variant="heading">{props.text}</Text>
-         {/* <div style={{ backgroundColor: 'black' }}>
+         <div style={{ backgroundColor: 'rgb(36, 36, 36)' }}>
             <div style={{wordBreak: 'break-word', width: '100%'}}>
                 {rows}
             </div>
-         </div> */}
+         </div>
       </WideAuthContainer>
     );
   };

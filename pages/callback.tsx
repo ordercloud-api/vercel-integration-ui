@@ -10,6 +10,10 @@ import RegisterView from '../components/common/RegisterView';
 import { PortalAuthentication } from '@ordercloud/portal-javascript-sdk/dist/models/PortalAuthentication';
 import ForgotPasswordView from '../components/common/ForgotPasswordView';
 import SeedingView from '../components/common/Seeding';
+import { seed } from '@ordercloud/seeding';
+import { SeedResponse } from '@ordercloud/seeding/dist/commands/seed';
+import { VercelEnvVariable } from '../types/VercelEnvVariable';
+import axios from 'axios';
 
 export type View = 'SPLASH_PAGE' | 'REGISTER' | 'LOGIN' | 'FORGOT_PASS' | 'SEEDING'
 
@@ -62,14 +66,55 @@ export default function CallbackPage() {
   const onAuthenticate = async (auth: PortalAuthentication) => {
     setOCToken(auth);
     setView('SEEDING');
-    const res = await fetch(`/api/seed-organization?ocToken=${auth.access_token}`);
-    console.log(res.body)
-    if (res.status >= 400) {
-      setSeedPageText("Sorry, something failed during setup. Close the window and try again.")
-    } else {
+    try {
+      const result = await seed({
+        marketplaceName: 'Vercel Commerce',
+        //portalToken: auth.access_token,
+        dataUrl: 'Vercel-B2C',
+        portalToken: auth.access_token,
+        logger: (message, type) => {
+          addLog(message);
+        }
+      });
+      for (var project of vercelProjects) {
+        addLog(`Setting Enviornment Variables in Vercel project ${project.name}`);
+        await createVercelEnvVariables(project, result as SeedResponse);
+      }
+      
       backToVercel();
+    } catch (err) {
+      console.log(err)
+      setSeedPageText("Sorry, something failed during setup. Close the window and try again.")
     }
+  }
 
+  const createVercelEnvVariables = async (project: VercelProject, seedResponse: SeedResponse): Promise<void> => {
+      var envVars = [
+        {
+          key: "NEXT_PUBLIC_ORDERCLOUD_STOREFRONT_APICLIENT",
+          value: seedResponse.apiClients.find(x => x.AppName === "Storefront App").ID
+        },
+        {
+          key: "NEXT_PUBLIC_ORDERCLOUD_STORE_DOMAIN",
+          value: `https://${project.name}.vercel.app`
+        },
+        {
+          key: "NEXT_PUBLIC_ORDERCLOUD_MARKETPLACE_ID",
+          value: seedResponse.marketplaceID
+        },
+        {
+          key: "COMMERCE_PROVIDER",
+          value: "ordercloud"
+        },
+      ];
+      var requests = envVars.map(c => {
+        return axios.post(
+          `https://api.vercel.com/v8/projects/${project.id}/env`, 
+          {...c, type: "plain", target: ["development", "preview", "production"]},
+          { headers: { Authorization:  `Bearer ${vercelToken.accessToken}` }}
+        )
+      })
+      await Promise.all(requests);
   }
 
   const addLog = (message: string) => {
