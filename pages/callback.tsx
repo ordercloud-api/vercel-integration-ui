@@ -11,8 +11,7 @@ import { PortalAuthentication } from '@ordercloud/portal-javascript-sdk/dist/mod
 import ForgotPasswordView from '../components/common/ForgotPasswordView';
 import SeedingView from '../components/common/Seeding';
 import { seed } from '@ordercloud/seeding';
-import { SeedResponse } from '@ordercloud/seeding/dist/commands/seed';
-import { VercelEnvVariable } from '../types/VercelEnvVariable';
+import { SeedArgs, SeedResponse } from '@ordercloud/seeding/dist/commands/seed';
 import axios from 'axios';
 
 export type View = 'SPLASH_PAGE' | 'REGISTER' | 'LOGIN' | 'FORGOT_PASS' | 'SEEDING'
@@ -75,7 +74,7 @@ export default function CallbackPage() {
         logger: (message, type) => {
           addLog(message);
         }
-      });
+      } as SeedArgs);
       for (var project of vercelProjects) {
         addLog(`Setting Enviornment Variables in Vercel project ${project.name}`);
         await createVercelEnvVariables(project, result as SeedResponse);
