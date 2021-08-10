@@ -88,10 +88,11 @@ export default function CallbackPage() {
   }
 
   const createVercelEnvVariables = async (project: VercelProject, seedResponse: SeedResponse): Promise<void> => {
+      var apiClient = seedResponse.apiClients.find(x => x.AppName === "Storefront App") as any;
       var envVars = [
         {
           key: "NEXT_PUBLIC_ORDERCLOUD_STOREFRONT_APICLIENT",
-          value: seedResponse.apiClients.find(x => x.AppName === "Storefront App").ID
+          value: apiClient.ID
         },
         {
           key: "NEXT_PUBLIC_ORDERCLOUD_STORE_DOMAIN",
