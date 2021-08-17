@@ -35,6 +35,9 @@ export default function CallbackPage() {
         userId: json.user_id,
         teamId: json.team_id
       })
+
+      console.log("Get Access token response", json);
+
     }
 
     if (router.isReady && !vercelToken.accessToken) {
@@ -75,6 +78,8 @@ export default function CallbackPage() {
           addLog(message);
         }
       } as SeedArgs);
+      console.log("Vercel Projects", vercelProjects);
+      console.log("Api Clients", vercelProjects);
       for (var project of vercelProjects) {
         addLog(`Setting Enviornment Variables in Vercel project ${project.name}`);
         await createVercelEnvVariables(project, result as SeedResponse);
