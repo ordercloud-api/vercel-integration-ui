@@ -11,7 +11,7 @@ import { PortalAuthentication } from '@ordercloud/portal-javascript-sdk/dist/mod
 import ForgotPasswordView from '../components/common/ForgotPasswordView';
 import SeedingView from '../components/common/Seeding';
 import { seed } from '@ordercloud/seeding';
-import { SeedArgs, SeedResponse } from '@ordercloud/seeding/dist/commands/seed';
+import { SeedArgs, SeedResponse } from '@ordercloud/seeding';
 import axios from 'axios';
 
 export type View = 'SPLASH_PAGE' | 'REGISTER' | 'LOGIN' | 'FORGOT_PASS' | 'SEEDING'
