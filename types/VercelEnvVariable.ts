@@ -12,4 +12,8 @@ export interface VercelEnvVariable {
     updatedBy?: string;
 }
 
+export interface ListEnvVariableResponse {
+    envs: VercelEnvVariable[];
+}
+
 export type VercelEnvVariableTarget = "production" | "development" |"preview";

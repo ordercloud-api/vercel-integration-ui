@@ -12,7 +12,7 @@ import ForgotPasswordView from '../components/common/ForgotPasswordView';
 import SeedingView from '../components/common/Seeding';
 import { seed } from '@ordercloud/seeding';
 import { SeedArgs, SeedResponse } from '@ordercloud/seeding';
-import axios from 'axios';
+import { CreateOrUpdateEnvVariables } from '../services/vercel-api';
 
 export type View = 'SPLASH_PAGE' | 'REGISTER' | 'LOGIN' | 'FORGOT_PASS' | 'SEEDING'
 
@@ -94,14 +94,10 @@ export default function CallbackPage() {
 
   const createVercelEnvVariables = async (project: VercelProject, seedResponse: SeedResponse): Promise<void> => {
       var apiClient = seedResponse.apiClients.find(x => x.AppName === "Storefront App") as any;
-      var envVars = [
+      await CreateOrUpdateEnvVariables(project.id, vercelToken.accessToken, [
         {
-          key: "NEXT_PUBLIC_ORDERCLOUD_STOREFRONT_APICLIENT",
+          key: "NEXT_PUBLIC_ORDERCLOUD_CLIENT_ID",
           value: apiClient.ID
-        },
-        {
-          key: "NEXT_PUBLIC_ORDERCLOUD_STORE_DOMAIN",
-          value: `https://${project.name}.vercel.app`
         },
         {
           key: "NEXT_PUBLIC_ORDERCLOUD_MARKETPLACE_ID",
@@ -111,15 +107,7 @@ export default function CallbackPage() {
           key: "COMMERCE_PROVIDER",
           value: "ordercloud"
         },
-      ];
-      var requests = envVars.map(c => {
-        return axios.post(
-          `https://api.vercel.com/v8/projects/${project.id}/env`, 
-          {...c, type: "plain", target: ["development", "preview", "production"]},
-          { headers: { Authorization:  `Bearer ${vercelToken.accessToken}` }}
-        )
-      })
-      await Promise.all(requests);
+      ]);      
   }
 
   const addLog = (message: string) => {
