@@ -18,6 +18,7 @@
     "@types/yup": "^0.29.13",
     "autoprefixer": "^10.0.4",
     "axios": "^0.21.1",
+    "bootstrap": "^5.1.0",
     "formik": "^2.2.9",
     "fs": "0.0.1-security",
     "next": "^10.2.3",
