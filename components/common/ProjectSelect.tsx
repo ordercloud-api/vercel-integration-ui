@@ -48,26 +48,26 @@ const ProjectSelect: FC<{
     return (
         <div className="flex justify-center min-h-screen overflow-visible font-sans antialiased bg-primary-100">
             <div className="py-6 w-full md:max-w-3xl md:mt-8">
-                <img src='/oc_banner_logo.svg' className="pb-4" style={{width: "200px"}} alt='OrderCloud'/>
+                <img src='/oc_banner_logo.svg' style={{width: "200px", paddingBottom: "1rem"}} alt='OrderCloud'/>
                 <div className="rounded border border-primary-200 bg-white">
-                    <div className="px-6 py-6">
-                        <h4 className="text-xl font-semibold">Select Vercel Projects</h4>
-                        <p className="text-sm mt-3">{text}</p>
-                        <div className="mt-6">
+                    <div style={{padding: "1.5rem"}}>
+                        <h4 style={{fontSize: "1.25rem", lineHeight: "1.75rem", fontWeight: 600}}>Select Vercel Projects</h4>
+                        <p style={{fontSize: "0.875rem", lineHeight: "1.25rem", marginTop: "0.75rem"}}>{text}</p>
+                        <div style={{marginTop: "1.5rem"}}>
                             {allProjects.map(project => {
                                 var active = activeProjects.includes(project.id);
-                                return <div className="pb-1" key={project.id}>
+                                return <div style={{paddingBottom: "0.25rem"}} key={project.id}>
                                         <Checkbox
                                             checked={active}
                                             onClick={() => toggleActive(project.id)}
                                             key={project.id}/>
-                                        <span className="pl-2">{project.name}</span>
+                                        <span style={{paddingLeft: "0.5rem"}}>{project.name}</span>
                                 </div>
                             })}
                         </div>
                     </div>
                 </div>
-                <div className="mt-5 float-right">
+                <div className="mt-5" style={{float: "right"}}>
                     <Button
                     variant="contained"
                     color="secondary"
