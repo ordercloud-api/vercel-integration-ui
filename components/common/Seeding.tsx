@@ -42,7 +42,7 @@ import { Text } from '../vercel-ui';
     })
     return (
       <WideAuthContainer>
-         <Text variant="heading">{props.text}</Text>
+         <Text variant="pageHeading">{props.text}</Text>
          <div style={{ backgroundColor: 'rgb(36, 36, 36)' }}>
             <div style={{wordBreak: 'break-word', width: '100%'}}>
                 {rows}

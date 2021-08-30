@@ -11,7 +11,7 @@ import { PortalAuthentication } from '@ordercloud/portal-javascript-sdk/dist/mod
 import ForgotPasswordView from '../components/common/ForgotPasswordView';
 import SeedingView from '../components/common/Seeding';
 import { seed } from '@ordercloud/seeding';
-import { SeedArgs, SeedResponse } from '@ordercloud/seeding';
+import { SeedArgs } from '@ordercloud/seeding';
 import { CreateOrUpdateEnvVariables, DeleteEnvVariables } from '../services/vercel-api';
 import ProjectSelect, { ProjectActions } from '../components/common/ProjectSelect';
 
@@ -29,7 +29,7 @@ export default function CallbackPage() {
   const [ocToken, setOCToken] = useState<PortalAuthentication>(null)
   const [vercelProjects, setVercelProjects] = useState<VercelProject[]>()
   const [logs, setLogs] = useState<string[]>([]);
-  const [seedPageText, setSeedPageText] = useState<string>("We are creating your storefront!");
+  const [seedPageText, setSeedPageText] = useState<string>("We are seeding your marketplace!");
   const [view, setView] = useState<View>('SPLASH_PAGE')
 
   useEffect(() => {
@@ -158,7 +158,7 @@ export default function CallbackPage() {
         <ForgotPasswordView setView={setView} />
       )}
       {view === 'PROJECT_SELECT' && (
-        <ProjectSelect allProjects={vercelProjects} marketplaceID={marketplace.ID} selectProjects={selectProjects} />
+        <ProjectSelect allProjects={vercelProjects} marketplaceID={marketplace?.ID} selectProjects={selectProjects} />
       )}
       {view === 'SEEDING' && (
         <SeedingView logs={logs} text={seedPageText}/>

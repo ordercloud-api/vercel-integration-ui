@@ -1,4 +1,4 @@
-import { Button } from '@material-ui/core';
+import { Button, Checkbox } from '@material-ui/core';
 import React, { FC, useState } from 'react'
 import { View } from '../../pages/callback'
 import { VercelProject } from '../../types/VercelProject'
@@ -41,27 +41,46 @@ const ProjectSelect: FC<{
         selectProjects({ toAdd, toRemove })
     }
 
-    return (
-        <div>
-        <h4 className="text-xl font-semibold">Select Projects to Connect to OrderCloud</h4>
-            {allProjects.map(project => {
-                var active = activeProjects.includes(project.id);
-                return <div key={project.id}>
-                    <span>{project.name}</span> - <span onClick={() => toggleActive(project.id)}>{active ? "Active" : "Not"}</span>
-                </div>
-            })}
-            <Button
-              className="mt-5"
-              color="secondary"
-              type="submit"
-              size="large"
-              disabled={activeProjects.length < 1}
-              onClick={() => select()}
-            >
-              Save Changes and Continue
-            </Button>
-        </div>
+    var text = marketplaceID ?
+        `These projects will be connected to the OrderCloud marketplace with ID ${marketplaceID}` :
+         "A new OrderCloud marketplace will be seeded and these projects connected.";
 
+    return (
+        <div className="flex justify-center min-h-screen overflow-visible font-sans antialiased bg-primary-100">
+            <div className="py-6 w-full md:max-w-3xl md:mt-8">
+                <img src='/oc_banner_logo.svg' className="pb-4" style={{width: "200px"}} alt='OrderCloud'/>
+                <div className="rounded border border-primary-200 bg-white">
+                    <div className="px-6 py-6">
+                        <h4 className="text-xl font-semibold">Select Vercel Projects</h4>
+                        <p className="text-sm mt-3">{text}</p>
+                        <div className="mt-6">
+                            {allProjects.map(project => {
+                                var active = activeProjects.includes(project.id);
+                                return <div className="pb-1" key={project.id}>
+                                        <Checkbox
+                                            checked={active}
+                                            onClick={() => toggleActive(project.id)}
+                                            key={project.id}/>
+                                        <span className="pl-2">{project.name}</span>
+                                </div>
+                            })}
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-5 float-right">
+                    <Button
+                    variant="contained"
+                    color="secondary"
+                    type="submit"
+                    size="large"
+                    disabled={activeProjects.length < 1}
+                    onClick={() => select()}
+                    >
+                    Save and Continue
+                    </Button>
+                </div>
+            </div>
+        </div>
     );
 }
 
