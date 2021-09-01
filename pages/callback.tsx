@@ -13,19 +13,25 @@ import SeedingView from '../components/common/Seeding';
 import { seed } from '@ordercloud/seeding';
 import { SeedArgs } from '@ordercloud/seeding';
 import { CreateOrUpdateEnvVariables, DeleteEnvVariables } from '../services/vercel-api';
-import ProjectSelect, { ProjectActions } from '../components/common/ProjectSelect';
+import ProjectSelect from '../components/common/ProjectSelect';
+import { ENV_VARIABLES, NEW_PROJECT_CODE as NEW_MRKT_CODE } from '../services/constants';
 
 export type View = 'SPLASH_PAGE' | 'REGISTER' | 'LOGIN' | 'FORGOT_PASS' | 'PROJECT_SELECT' | 'SEEDING';
 
+export interface ConnectedProject extends Marketplace {
+  project: VercelProject;
+}
+
 export interface Marketplace {
   ID: string,
-  ApiClient: string
+  Name: string,
+  ApiClientID: string
 }
 
 export default function CallbackPage() {
   const router = useRouter()
   const [vercelToken, setVercelToken] = useState<VercelTokenContext>({})
-  const [marketplace, setMarketplace] = useState<Marketplace>(null);
+  const [connectedProjects, setConnectedProjects] = useState<ConnectedProject[]>([]);
   const [ocToken, setOCToken] = useState<PortalAuthentication>(null)
   const [vercelProjects, setVercelProjects] = useState<VercelProject[]>()
   const [logs, setLogs] = useState<string[]>([]);
@@ -65,12 +71,8 @@ export default function CallbackPage() {
         const json = await res.json()
 
         setVercelProjects(json.projects)
-        var envVars = json.projects.flatMap(p => p.env);
-        var marketplace = envVars.find(env => env.key === "NEXT_PUBLIC_ORDERCLOUD_MARKETPLACE_ID" && env.value);
-        var apiClient = envVars.find(env => env.key === "NEXT_PUBLIC_ORDERCLOUD_CLIENT_ID" && env.value);
-        if (marketplace && apiClient) {
-          setMarketplace({ ID: marketplace.value, ApiClient: apiClient.value });
-        }
+        console.log("projects", json.projects);
+        setConnectedProjects(connectProjects(json.projects));
       }
     }
 
@@ -78,66 +80,84 @@ export default function CallbackPage() {
     fetchProjects(accessToken, teamId)
   }, [vercelToken])
 
+  const connectProjects = (projects: VercelProject[]): ConnectedProject[] => {
+    var marketplaces: ConnectedProject[] = [];
+    for (var project of projects) {
+      var ID = getEnvVariable(project, ENV_VARIABLES.MRKT_ID);
+      var Name = getEnvVariable(project, ENV_VARIABLES.MRKT_NAME);
+      var ApiClientID = getEnvVariable(project, ENV_VARIABLES.MRKT_API_CLIENT);
+      if (ID && Name && ApiClientID) {
+        marketplaces.push({ ID, Name, ApiClientID, project });
+      }
+    }
+    return marketplaces;
+  }
+
+  const getEnvVariable = (project: VercelProject, key: string) : string | void => { 
+    return project?.env?.find(env => env.key === key && env.value)?.value;
+  }
+
+
   const onAuthenticate = async (auth: PortalAuthentication) => {
-    console.log("projects", vercelProjects);
-    console.log("marketpalce", marketplace);
     setOCToken(auth);
     setView('PROJECT_SELECT');
   }
 
-  const selectProjects = async (projectActions: ProjectActions) => {
-    console.log("project actions", projectActions);
+  const onSelectProjects = async (newConnections: ConnectedProject[]) => {
+      console.log("result of selection", newConnections);
+      var newMarketplace;
+      if (newConnections.some(m => m.ID === NEW_MRKT_CODE)) {
+        newMarketplace = await seedNewMarketplace();
+      }
 
-    var apiClientID = marketplace?.ApiClient;
-    var marketplaceID = marketplace?.ID;
-    
-      if (!marketplace) {
-        // Create a new org
-        try {
-          setView('SEEDING');
-          const result = await seed({
-            marketplaceName: 'Vercel Commerce',
-            dataUrl: 'Vercel-B2C',
-            portalToken: ocToken.access_token,
-            logger: (message, type) => {
-              addLog(message);
-            }
-          } as SeedArgs);
-          marketplaceID = result.marketplaceID;
-          apiClientID = result.apiClients.find(x => x.AppName === "Storefront App").ID;
-        } catch (err) {
-          console.log(err)
-          setSeedPageText("Sorry, something failed during setup. Close the window and try again.")
+      for (var selection of newConnections) {
+        var oldMrktID = getEnvVariable(selection.project, ENV_VARIABLES.MRKT_ID);
+
+        if (selection.ID === NEW_MRKT_CODE) {
+          // Connect to the new marketplace
+          await CreateOrUpdateEnvVariables(selection.project, newMarketplace, vercelToken.accessToken)
+        } else if (oldMrktID !== selection.ID) {
+          // Connect to a different, existing marketplace
+          var oldMarketplace = connectedProjects.find(m => m.ID === selection.ID);
+          await CreateOrUpdateEnvVariables(selection.project, oldMarketplace, vercelToken.accessToken)
+        } 
+      }
+
+      for (var project of connectedProjects) {
+        if (!newConnections.some(s => s.project.id === project.project.id)) {
+          // Project is no longer connected to any OC marketplace
+          await DeleteEnvVariables(project.project, vercelToken.accessToken);
         }
       }
-      for (var project of projectActions.toAdd) {
-        await setEnvVariables(project, apiClientID, marketplaceID);
-      }
-      for (var project of projectActions.toRemove) {
-        await DeleteEnvVariables(project, vercelToken.accessToken, ["NEXT_PUBLIC_ORDERCLOUD_CLIENT_ID", "NEXT_PUBLIC_ORDERCLOUD_MARKETPLACE_ID", "NEXT_PUBLIC_ORDERCLOUD_MARKETPLACE_ID"]);
-      }
+     
       backToVercel();
   }
 
-  const setEnvVariables = async (project: VercelProject, apiClientID: string, marketplaceID: string): Promise<void> => {
-      await CreateOrUpdateEnvVariables(project, vercelToken.accessToken, [
-        {
-          key: "NEXT_PUBLIC_ORDERCLOUD_CLIENT_ID",
-          value: apiClientID
-        },
-        {
-          key: "NEXT_PUBLIC_ORDERCLOUD_MARKETPLACE_ID",
-          value: marketplaceID
-        },
-        {
-          key: "COMMERCE_PROVIDER",
-          value: "ordercloud"
-        },
-      ]);      
+  const seedNewMarketplace = async (): Promise<Marketplace> => {
+    try {
+      setView('SEEDING');
+      const result = await seed({
+        marketplaceName: 'Vercel Commerce',
+        dataUrl: 'Vercel-B2C',
+        portalToken: ocToken.access_token,
+        logger: (message, type) => {
+          addLog(message);
+        }
+      } as SeedArgs);
+      setSeedPageText("Done seeding. Connecting to project Env Variables.")
+      return {
+        ID: result.marketplaceID,
+        Name: result.marketplaceName,
+        ApiClientID: result.apiClients.find(x => x.AppName === "Storefront App").ID
+      }
+    } catch (err) {
+      console.log(err)
+      setSeedPageText("Sorry, something failed during setup. Close the window and try again.")
+    }
   }
 
   const addLog = (message: string) => {
-    setLogs(oldLogs => [...oldLogs, message]);
+    setLogs(oldLogs => [message, ...oldLogs]);
   }
 
   const backToVercel = () => {
@@ -158,7 +178,7 @@ export default function CallbackPage() {
         <ForgotPasswordView setView={setView} />
       )}
       {view === 'PROJECT_SELECT' && (
-        <ProjectSelect allProjects={vercelProjects} marketplaceID={marketplace?.ID} selectProjects={selectProjects} />
+        <ProjectSelect allProjects={vercelProjects} savedConnections={connectedProjects} saveAndContinue={onSelectProjects} />
       )}
       {view === 'SEEDING' && (
         <SeedingView logs={logs} text={seedPageText}/>

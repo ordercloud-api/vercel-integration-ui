@@ -1,8 +1,28 @@
 import axios from "axios";
+import { Marketplace } from "../pages/callback";
 import { VercelProject } from "../types/VercelProject";
+import { ENV_VARIABLES } from "./constants";
 
-export const CreateOrUpdateEnvVariables = async (project: VercelProject, accessToken: string, varsToSet: { key: string, value: string }[]) : Promise<void> => {    
-    var requests = varsToSet.map(varToSet => {
+export const CreateOrUpdateEnvVariables = async (project: VercelProject, marketplace: Marketplace, accessToken: string) : Promise<void> => {    
+    var toSet = [
+      {
+        key: ENV_VARIABLES.MRKT_API_CLIENT,
+        value: marketplace.ApiClientID
+      },
+      {
+        key: ENV_VARIABLES.MRKT_ID,
+        value: marketplace.ID
+      },
+      {
+        key: ENV_VARIABLES.MRKT_NAME,
+        value: marketplace.Name
+      },
+      {
+        key: ENV_VARIABLES.PROVIDER,
+        value: "ordercloud"
+      }
+    ];
+    var requests = toSet.map(varToSet => {
         var existing = project.env.find(existing => existing.key === varToSet.key)
         if (existing !== undefined) {
             // update value
@@ -24,8 +44,14 @@ export const CreateOrUpdateEnvVariables = async (project: VercelProject, accessT
       await Promise.all(requests);
 }
 
-export const DeleteEnvVariables = async (project: VercelProject, accessToken: string, keys: string[]) : Promise<void> => {    
-    var requests = keys.map(key => {
+export const DeleteEnvVariables = async (project: VercelProject, accessToken: string) : Promise<void> => {
+    var toDelete = [
+        ENV_VARIABLES.MRKT_API_CLIENT,
+        ENV_VARIABLES.MRKT_ID,
+        ENV_VARIABLES.MRKT_NAME,
+        ENV_VARIABLES.PROVIDER
+    ];    
+    var requests = toDelete.map(key => {
         var varID = project.env.find(e => e.key === key).id;
         return axios.delete(
             `https://api.vercel.com/v8/projects/${project.id}/env/${varID}`, 
