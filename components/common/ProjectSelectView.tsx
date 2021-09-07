@@ -14,7 +14,7 @@ const ProjectSelectView: FC<{
   savedConnections: ConnectedProject[];
 }> = ({ saveAndContinue, allProjects, savedConnections }) => {    
     var newMarketplace = { ID: NEW_PROJECT_CODE, Name: "Seed new Marketplace", ApiClientID: null };
-    var init = savedConnections.length > 0 ? savedConnections : [{ project: allProjects[0], ... newMarketplace}];
+    var init = savedConnections.length > 0 ? [...savedConnections] : [{ project: allProjects[0], ... newMarketplace}];
     const [connections, setConnections] = useState<ConnectedProject[]>(init);
 
     var allMarketplaces: OrderCloudMarketplace[] = savedConnections.reduce((marketplaces, project) => {
