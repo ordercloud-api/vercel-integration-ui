@@ -1,14 +1,14 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FormControl, Button, Grid, MenuItem, Select } from '@material-ui/core';
 import React, { FC, useState } from 'react'
-import { ConnectedProject, Marketplace } from '../../pages/callback'
 import { NEW_PROJECT_CODE } from '../../services/constants';
 import { VercelProject } from '../../types/VercelProject'
 import { Button as VercelButton } from '../vercel-ui'
 import { faTimes, faPlusCircle } from '@fortawesome/free-solid-svg-icons'
+import { ConnectedProject, OrderCloudMarketplace } from './ViewCoordinator';
 
 
-const ProjectSelect: FC<{
+const ProjectSelectView: FC<{
   saveAndContinue: (selctions: ConnectedProject[]) => void,
   allProjects: VercelProject[],
   savedConnections: ConnectedProject[];
@@ -17,13 +17,12 @@ const ProjectSelect: FC<{
     var init = savedConnections.length > 0 ? savedConnections : [{ project: allProjects[0], ... newMarketplace}];
     const [connections, setConnections] = useState<ConnectedProject[]>(init);
 
-    var allMarketplaces: Marketplace[] = savedConnections.reduce((marketplaces, project) => {
+    var allMarketplaces: OrderCloudMarketplace[] = savedConnections.reduce((marketplaces, project) => {
         if (!marketplaces.some(m => m.ID === project.ID)) {
             marketplaces.push({ ID: project.ID, Name: project.Name, ApiClientID: project.ApiClientID})
         }
         return marketplaces;
-    }, []);
-    allMarketplaces.unshift(newMarketplace);
+    }, [{ ID: NEW_PROJECT_CODE, Name: "Seed new Marketplace", ApiClientID: null }]);
 
     var unConnectedProjects = allProjects.filter(p => !connections.some(cp => cp.project.id === p.id));
 
@@ -51,9 +50,12 @@ const ProjectSelect: FC<{
     const setConnectionMarketplace = (index: number, marketplaceID: string) => {
         var marketplace = allMarketplaces.find(x => x.ID === marketplaceID);
         setConnections(oldConnections => {
+            console.log(oldConnections);
             var connection = oldConnections[index];
             var newConection = {...marketplace, project: connection.project }
             oldConnections[index] = newConection;
+            console.log([...oldConnections]);
+
             return [...oldConnections];
         });
     }  
@@ -76,7 +78,7 @@ const ProjectSelect: FC<{
                                 <Grid item xs>
                                     <div><b>Vercel Project</b></div>
                                 </Grid>
-                                <Grid item xs>
+                                <Grid item xs style={{marginLeft: "3rem"}}>
                                     <div><b>OrderCloud Marketplace</b></div>
                                 </Grid>
                             </Grid>
@@ -103,7 +105,7 @@ const ProjectSelect: FC<{
                                                 onChange={(event) => setConnectionMarketplace(index, event.target.value as string)}
                                                 value={connection.ID}>
                                                 {allMarketplaces.map(marketplace => {
-                                                    return <MenuItem key={marketplace.ID} value={marketplace.ID}>{marketplace.Name}</MenuItem>
+                                                    return <MenuItem key={marketplace.ID} value={marketplace.ID}>{`${marketplace.Name} (ID: "${marketplace.ID}")`}</MenuItem>
                                                 })}
                                             </Select>
                                         </FormControl>
@@ -126,7 +128,7 @@ const ProjectSelect: FC<{
                     size="large"
                     onClick={() => saveAndContinue(connections)}
                     >
-                    Save and Continue
+                    Apply Changes
                     </Button>
                 </div>
             </div>
@@ -134,4 +136,4 @@ const ProjectSelect: FC<{
     );
 }
 
-export default ProjectSelect
+export default ProjectSelectView

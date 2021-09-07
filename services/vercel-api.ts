@@ -1,9 +1,9 @@
 import axios from "axios";
-import { Marketplace } from "../pages/callback";
+import { OrderCloudMarketplace } from "../components/common/ViewCoordinator";
 import { VercelProject } from "../types/VercelProject";
 import { ENV_VARIABLES } from "./constants";
 
-export const CreateOrUpdateEnvVariables = async (project: VercelProject, marketplace: Marketplace, accessToken: string) : Promise<void> => {    
+export const CreateOrUpdateEnvVariables = async (project: VercelProject, marketplace: OrderCloudMarketplace, accessToken: string) : Promise<void> => {    
     var toSet = [
       {
         key: ENV_VARIABLES.MRKT_API_CLIENT,

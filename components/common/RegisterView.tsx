@@ -14,8 +14,8 @@ import FormSubmitButton from '../ordercloud-ui/FormSubmitButton';
 import { Alert } from '../ordercloud-ui/AlertContainer';
 import { Accounts, Auth } from '@ordercloud/portal-javascript-sdk';
 import FormPasswordField from '../ordercloud-ui/FormPasswordField';
-import { View } from '../../pages/callback';
 import { PortalAuthentication } from '@ordercloud/portal-javascript-sdk/dist/models/PortalAuthentication';
+import { View } from './ViewCoordinator';
 
 
 const useVerificationCodeStyles = makeStyles((theme: Theme) =>

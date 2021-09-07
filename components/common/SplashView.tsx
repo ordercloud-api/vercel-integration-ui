@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { Button, Card, Text } from '../vercel-ui'
-import { View } from '../../pages/callback'
 import IntegrationHero from './IntegrationHero'
+import { View } from './ViewCoordinator'
 
 const SplashView: FC<{
   setView: React.Dispatch<React.SetStateAction<View>>
