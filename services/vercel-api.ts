@@ -1,9 +1,10 @@
 import axios from "axios";
 import { OrderCloudMarketplace } from "../components/common/ViewCoordinator";
+import { IntegrationConfiguration } from "../types/IntegrationConfiguration";
 import { VercelProject } from "../types/VercelProject";
 import { ENV_VARIABLES } from "./constants";
 
-export const CreateOrUpdateEnvVariables = async (project: VercelProject, marketplace: OrderCloudMarketplace, accessToken: string) : Promise<void> => {    
+export const CreateOrUpdateEnvVariables = async (project: VercelProject, marketplace: OrderCloudMarketplace, configuration: IntegrationConfiguration) : Promise<void> => {    
     var toSet = [
       {
         key: ENV_VARIABLES.MRKT_API_CLIENT,
@@ -27,24 +28,24 @@ export const CreateOrUpdateEnvVariables = async (project: VercelProject, marketp
         if (existing !== undefined) {
             // update value
             return axios.patch(
-                `https://api.vercel.com/v8/projects/${project.id}/env/${existing.id}`, 
+                `https://api.vercel.com/v8/projects/${project.id}/env/${existing.id}${configuration?.teamId ? `?teamId=${configuration?.teamId}` : ''}`, 
                 { value: varToSet.value },
-                { headers: { Authorization:  `Bearer ${accessToken}` }}
+                { headers: { Authorization:  `Bearer ${configuration.vercelAccessToken}` }}
             )
 
         } else {
             // create 
             return axios.post(
-                `https://api.vercel.com/v8/projects/${project.id}/env`, 
+                `https://api.vercel.com/v8/projects/${project.id}/env${configuration?.teamId ? `?teamId=${configuration?.teamId}` : ''}`, 
                 {...varToSet, type: "plain", target: ["development", "preview", "production"]},
-                { headers: { Authorization:  `Bearer ${accessToken}` }}
+                { headers: { Authorization:  `Bearer ${configuration.vercelAccessToken}` }}
             )
         }
       });
       await Promise.all(requests);
 }
 
-export const DeleteEnvVariables = async (project: VercelProject, accessToken: string) : Promise<void> => {
+export const DeleteEnvVariables = async (project: VercelProject, configuration: IntegrationConfiguration) : Promise<void> => {
     var toDelete = [
         ENV_VARIABLES.MRKT_API_CLIENT,
         ENV_VARIABLES.MRKT_ID,
@@ -54,8 +55,8 @@ export const DeleteEnvVariables = async (project: VercelProject, accessToken: st
     var requests = toDelete.map(key => {
         var varID = project.env.find(e => e.key === key).id;
         return axios.delete(
-            `https://api.vercel.com/v8/projects/${project.id}/env/${varID}`, 
-            { headers: { Authorization:  `Bearer ${accessToken}` }}
+            `https://api.vercel.com/v8/projects/${project.id}/env/${varID}${configuration?.teamId ? `?teamId=${configuration?.teamId}` : ''}`, 
+            { headers: { Authorization:  `Bearer ${configuration.vercelAccessToken}` }}
         );
     });
     try { 

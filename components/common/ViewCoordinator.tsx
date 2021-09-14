@@ -94,27 +94,29 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
         newMarketplace = await seedNewMarketplace();
       }
 
-      for (var selection of newConnections) {
-        var oldMrktID = getEnvVariable(selection.project, ENV_VARIABLES.MRKT_ID);
+      try {
+        for (var selection of newConnections) {
+          var oldMrktID = getEnvVariable(selection.project, ENV_VARIABLES.MRKT_ID);
 
-        if (selection.ID === NEW_PROJECT_CODE) {
-          // Connect to the new marketplace
-          await CreateOrUpdateEnvVariables(selection.project, newMarketplace, configuration.vercelAccessToken)
-        } else if (oldMrktID !== selection.ID) {
-          // Connect to a different, existing marketplace
-          var oldMarketplace = connectedProjects.find(m => m.ID === selection.ID);
-          await CreateOrUpdateEnvVariables(selection.project, oldMarketplace, configuration.vercelAccessToken)
-        } 
-      }
-
-      for (var project of connectedProjects) {
-        if (!newConnections.some(s => s.project.id === project.project.id)) {
-          // Project is no longer connected to any OC marketplace
-          await DeleteEnvVariables(project.project, configuration.vercelAccessToken);
+          if (selection.ID === NEW_PROJECT_CODE) {
+            // Connect to the new marketplace
+            await CreateOrUpdateEnvVariables(selection.project, newMarketplace, configuration)
+          } else if (oldMrktID !== selection.ID) {
+            // Connect to a different, existing marketplace
+            var oldMarketplace = connectedProjects.find(m => m.ID === selection.ID);
+            await CreateOrUpdateEnvVariables(selection.project, oldMarketplace, configuration)
+          } 
         }
-      }
-     
-      backToVercel();
+
+        for (var project of connectedProjects) {
+          if (!newConnections.some(s => s.project.id === project.project.id)) {
+            // Project is no longer connected to any OC marketplace
+            await DeleteEnvVariables(project.project, configuration);
+          }
+        }
+      } finally {
+        backToVercel();
+      } 
   }
 
   const seedNewMarketplace = async (): Promise<OrderCloudMarketplace> => {
@@ -128,7 +130,6 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
           addLog(message);
         }
       } as SeedArgs);
-      setSeedPageText("Done seeding. Connecting to project Env Variables.")
       return {
         ID: result.marketplaceID,
         Name: result.marketplaceName,
