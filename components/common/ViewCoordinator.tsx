@@ -24,7 +24,8 @@ export interface ConnectedProject extends OrderCloudMarketplace {
 export interface OrderCloudMarketplace {
   ID: string,
   Name: string,
-  ApiClientID: string
+  ApiClientID: string,
+  ClientSecret: string
 }
 
 export interface ViewCoordinatorProps {
@@ -70,8 +71,9 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       var ID = getEnvVariable(project, ENV_VARIABLES.MRKT_ID);
       var Name = getEnvVariable(project, ENV_VARIABLES.MRKT_NAME);
       var ApiClientID = getEnvVariable(project, ENV_VARIABLES.MRKT_API_CLIENT);
-      if (ID && Name && ApiClientID) {
-        marketplaces.push({ ID, Name, ApiClientID, project });
+      var ClientSecret = getEnvVariable(project, ENV_VARIABLES.MRKT_CLIENT_SECRET);
+      if (ID && Name && ApiClientID && ClientSecret) {
+        marketplaces.push({ ID, Name, ApiClientID, project, ClientSecret });
       }
     }
     return marketplaces;
@@ -130,11 +132,13 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
           addLog(message);
         }
       } as SeedArgs);
+      var apiClient = result.apiClients.find(x => x.AppName === API_CLIENT_NAME);
       return {
         ID: result.marketplaceID,
         Name: result.marketplaceName,
-        ApiClientID: result.apiClients.find(x => x.AppName === API_CLIENT_NAME).ID
-      }
+        ApiClientID: apiClient.ID,
+        ClientSecret: apiClient.ClientSecret
+      };
     } catch (err) {
       console.log(err)
       setSeedPageText("Sorry, something failed during setup. Close the window and try again.")

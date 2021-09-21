@@ -19,6 +19,10 @@ export const CreateOrUpdateEnvVariables = async (project: VercelProject, marketp
         value: marketplace.Name
       },
       {
+        key: ENV_VARIABLES.MRKT_CLIENT_SECRET,
+        value: marketplace.ClientSecret
+      },
+      {
         key: ENV_VARIABLES.PROVIDER,
         value: "ordercloud"
       }
