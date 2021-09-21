@@ -18,16 +18,16 @@ const ProjectSelectView: FC<{
     var selectedProject = allProjects.find(p => p.id === currentProjectId);
     selectedProject = selectedProject || allProjects[0];       
 
-    var newMarketplace = { ID: NEW_PROJECT_CODE, Name: "Seed new Marketplace", ApiClientID: null };
+    var newMarketplace = { ID: NEW_PROJECT_CODE, Name: "Seed new Marketplace", ApiClientID: null, ClientSecret: null };
     var init = savedConnections.length > 0 ? [...savedConnections] : [{ project: selectedProject, ... newMarketplace}];
     const [connections, setConnections] = useState<ConnectedProject[]>(init);
 
     var allMarketplaces: OrderCloudMarketplace[] = savedConnections.reduce((marketplaces, project) => {
         if (!marketplaces.some(m => m.ID === project.ID)) {
-            marketplaces.push({ ID: project.ID, Name: project.Name, ApiClientID: project.ApiClientID})
+            marketplaces.push({ ID: project.ID, Name: project.Name, ApiClientID: project.ApiClientID, ClientSecret: project.ClientSecret})
         }
         return marketplaces;
-    }, [{ ID: NEW_PROJECT_CODE, Name: "Seed new Marketplace", ApiClientID: null }]);
+    }, [{ ID: NEW_PROJECT_CODE, Name: "Seed new Marketplace", ApiClientID: null, ClientSecret: null }]);
 
     var unConnectedProjects = allProjects.filter(p => !connections.some(cp => cp.project.id === p.id));
 
