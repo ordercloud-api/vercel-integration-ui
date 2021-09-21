@@ -9,16 +9,17 @@ export default function Configure() {
   const [configuration, setConfiguration] = React.useState<IntegrationConfiguration>(null)
 
   React.useEffect(() => {
-    const fetchAccessToken = async (configurationId) => {
+    const fetchAccessToken = async (configurationId, currentProjectId) => {
       const res = await fetch(`/api/get-configuration?configurationId=${configurationId}`)
       const json: IntegrationConfiguration = await res.json()
+      json.currentProjectId = currentProjectId;
       setConfiguration(json)
       console.log("Get Access token response", json);
     }
 
     if (router.isReady && !configuration) {
-      const { configurationId } = router.query
-      fetchAccessToken(configurationId)
+      const { configurationId, currentProjectId } = router.query
+      fetchAccessToken(configurationId, currentProjectId)
     }
   }, [router])
 

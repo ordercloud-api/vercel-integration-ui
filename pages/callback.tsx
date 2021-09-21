@@ -9,16 +9,17 @@ export default function CallbackPage() {
   const [configuration, setConfiguration] = useState<IntegrationConfiguration>(null)
 
   useEffect(() => {
-    const fetchAccessToken = async (code, configurationId) => {
+    const fetchAccessToken = async (code, configurationId, currentProjectId) => {
       const res = await fetch(`/api/auth-with-code?code=${code}&configurationId=${configurationId}`)
       const json: IntegrationConfiguration = await res.json()
+      json.currentProjectId = currentProjectId;
       setConfiguration(json)
       console.log("Get Access token response", json);
     }
 
     if (router.isReady && !configuration) {
-      const { code, configurationId } = router.query
-      fetchAccessToken(code, configurationId)
+      const { code, configurationId, currentProjectId } = router.query
+      fetchAccessToken(code, configurationId, currentProjectId)
     }
   }, [router])
 

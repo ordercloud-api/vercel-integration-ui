@@ -8,3 +8,5 @@ export const ENV_VARIABLES = {
 export const NEW_PROJECT_CODE = "NEW";
 
 export const COSMOS_CONFIGURATION_CONTAINER = "vercelintegrationconfigurations"
+
+export const API_CLIENT_NAME = "Buyer Middleware";

@@ -6,15 +6,20 @@ import { VercelProject } from '../../types/VercelProject'
 import { Button as VercelButton } from '../vercel-ui'
 import { faTimes, faPlusCircle } from '@fortawesome/free-solid-svg-icons'
 import { ConnectedProject, OrderCloudMarketplace } from './ViewCoordinator';
+import { isNil } from 'lodash';
 
 
 const ProjectSelectView: FC<{
   saveAndContinue: (selctions: ConnectedProject[]) => void,
   allProjects: VercelProject[],
-  savedConnections: ConnectedProject[];
-}> = ({ saveAndContinue, allProjects, savedConnections }) => {    
+  currentProjectId: string,
+  savedConnections: ConnectedProject[],
+}> = ({ saveAndContinue, allProjects, currentProjectId, savedConnections }) => {    
+    var selectedProject = allProjects.find(p => p.id === currentProjectId);
+    selectedProject = selectedProject || allProjects[0];       
+
     var newMarketplace = { ID: NEW_PROJECT_CODE, Name: "Seed new Marketplace", ApiClientID: null };
-    var init = savedConnections.length > 0 ? [...savedConnections] : [{ project: allProjects[0], ... newMarketplace}];
+    var init = savedConnections.length > 0 ? [...savedConnections] : [{ project: selectedProject, ... newMarketplace}];
     const [connections, setConnections] = useState<ConnectedProject[]>(init);
 
     var allMarketplaces: OrderCloudMarketplace[] = savedConnections.reduce((marketplaces, project) => {
@@ -26,6 +31,14 @@ const ProjectSelectView: FC<{
 
     var unConnectedProjects = allProjects.filter(p => !connections.some(cp => cp.project.id === p.id));
 
+    var disableProjectSelect = !isNil(currentProjectId) || allProjects.length < 2;
+    var disableMarketplaceSelect = allMarketplaces.length < 2;
+    var showAddProject = unConnectedProjects.length > 0 && isNil(currentProjectId);
+
+    if (disableProjectSelect && disableMarketplaceSelect) {
+        // skip project select step
+        saveAndContinue(connections);
+    }
 
     const addNewConnection = () => {
         setConnections(oldConnections => [...oldConnections, { project: unConnectedProjects[0], ... newMarketplace}]);
@@ -85,8 +98,10 @@ const ProjectSelectView: FC<{
                             {connections.map((connection, index) => {
                                 return <Grid container key={index} style={{marginTop: "0.75rem"}}>
                                     <Grid item xs>
-                                        <FormControl variant="filled">
-                                            <Select
+                                        <FormControl>
+                                            <Select 
+                                                disabled={disableProjectSelect}
+                                                variant="outlined"
                                                 onChange={(event) => setConnectionProject(index, event.target.value as string)}
                                                 style={{width: "210px"}}
                                                 value={connection.project.id}>
@@ -99,8 +114,10 @@ const ProjectSelectView: FC<{
                                     </Grid>
                                     <Grid item xs style={{textAlign: "center", marginTop: '0.75rem'}}>&#x2190; links to &#x2192;</Grid>
                                     <Grid item xs>
-                                        <FormControl variant="filled">
+                                        <FormControl>
                                             <Select
+                                                disabled={disableMarketplaceSelect}
+                                                variant="outlined"
                                                 style={{width: "210px"}}
                                                 onChange={(event) => setConnectionMarketplace(index, event.target.value as string)}
                                                 value={connection.ID}>
@@ -118,7 +135,7 @@ const ProjectSelectView: FC<{
                         </Grid>
                         </div>
                     </div>
-                    { unConnectedProjects.length > 0 && <VercelButton variant="primary" style={{marginLeft: "1.5rem", marginBottom: "1rem"}} onClick={addNewConnection}><FontAwesomeIcon style={{marginRight: "0.5rem"}} icon={faPlusCircle}/> Add Another Vercel Project ({unConnectedProjects.length} Remaining)</VercelButton>}
+                    { showAddProject && <VercelButton variant="primary" style={{marginLeft: "1.5rem", marginBottom: "1rem"}} onClick={addNewConnection}><FontAwesomeIcon style={{marginRight: "0.5rem"}} icon={faPlusCircle}/> Add Another Vercel Project ({unConnectedProjects.length} Remaining)</VercelButton>}
                 </div>
                 <div className="mt-5" style={{float: "right"}}>
                     <Button

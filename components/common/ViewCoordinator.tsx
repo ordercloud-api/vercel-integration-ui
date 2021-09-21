@@ -3,7 +3,7 @@ import * as React from "react";
 import { VercelProject } from '../../types/VercelProject';
 import { PortalAuthentication } from '@ordercloud/portal-javascript-sdk/dist/models/PortalAuthentication';
 import { IntegrationConfiguration } from '../../types/IntegrationConfiguration';
-import { ENV_VARIABLES, NEW_PROJECT_CODE } from '../../services/constants';
+import { API_CLIENT_NAME, ENV_VARIABLES, NEW_PROJECT_CODE } from '../../services/constants';
 import { CreateOrUpdateEnvVariables, DeleteEnvVariables } from '../../services/vercel-api';
 import { useRouter } from 'next/router';
 import Layout from './layout';
@@ -133,7 +133,7 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       return {
         ID: result.marketplaceID,
         Name: result.marketplaceName,
-        ApiClientID: result.apiClients.find(x => x.AppName === "Storefront App").ID
+        ApiClientID: result.apiClients.find(x => x.AppName === API_CLIENT_NAME).ID
       }
     } catch (err) {
       console.log(err)
@@ -166,7 +166,12 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
         <ForgotPasswordView setView={setView} />
       )}
       {view === 'PROJECT_SELECT' && (
-        <ProjectSelectView allProjects={vercelProjects} savedConnections={connectedProjects} saveAndContinue={onSelectProjects} />
+        <ProjectSelectView 
+          allProjects={vercelProjects} 
+          savedConnections={connectedProjects} 
+          currentProjectId={configuration.currentProjectId} 
+          saveAndContinue={onSelectProjects} 
+        />
       )}
       {view === 'SEEDING' && (
         <SeedingView logs={logs} text={seedPageText}/>
