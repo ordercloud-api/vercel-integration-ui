@@ -54,7 +54,8 @@ export const DeleteEnvVariables = async (project: VercelProject, configuration: 
         ENV_VARIABLES.MRKT_API_CLIENT,
         ENV_VARIABLES.MRKT_ID,
         ENV_VARIABLES.MRKT_NAME,
-        ENV_VARIABLES.PROVIDER
+        ENV_VARIABLES.PROVIDER,
+        ENV_VARIABLES.MRKT_CLIENT_SECRET
     ];    
     var requests = toDelete.map(key => {
         var varID = project.env.find(e => e.key === key).id;
