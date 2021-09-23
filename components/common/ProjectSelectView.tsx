@@ -5,29 +5,31 @@ import { NEW_PROJECT_CODE } from '../../services/constants';
 import { VercelProject } from '../../types/VercelProject'
 import { Button as VercelButton } from '../vercel-ui'
 import { faTimes, faPlusCircle } from '@fortawesome/free-solid-svg-icons'
-import { ConnectedProject, OrderCloudMarketplace } from './ViewCoordinator';
 import { isNil } from 'lodash';
+import { Organization } from '@ordercloud/portal-javascript-sdk';
+import { ConnectedProject } from '../../types/ConnectedProject';
+import ProgressLoader from '../ordercloud-ui/ProgressLoader';
 
 
 const ProjectSelectView: FC<{
-  saveAndContinue: (selctions: ConnectedProject[]) => void,
+  onSelectProjects: (selctions: ConnectedProject[]) => void,
   allProjects: VercelProject[],
+  allMarketplaces: Organization[],
   currentProjectId: string,
   savedConnections: ConnectedProject[],
-}> = ({ saveAndContinue, allProjects, currentProjectId, savedConnections }) => {    
+}> = ({ onSelectProjects, allProjects, allMarketplaces, currentProjectId, savedConnections }) => {    
     var selectedProject = allProjects.find(p => p.id === currentProjectId);
     selectedProject = selectedProject || allProjects[0];       
 
-    var newMarketplace = { ID: NEW_PROJECT_CODE, Name: "Seed new Marketplace", ApiClientID: null, ClientSecret: null };
-    var init = savedConnections.length > 0 ? [...savedConnections] : [{ project: selectedProject, ... newMarketplace}];
-    const [connections, setConnections] = useState<ConnectedProject[]>(init);
+    var newMarketplace = { Id: NEW_PROJECT_CODE, Name: "Seed new Marketplace" };
+    var init = savedConnections.length > 0 ? [...savedConnections] : [{ project: selectedProject, marketplace: newMarketplace}];
 
-    var allMarketplaces: OrderCloudMarketplace[] = savedConnections.reduce((marketplaces, project) => {
-        if (!marketplaces.some(m => m.ID === project.ID)) {
-            marketplaces.push({ ID: project.ID, Name: project.Name, ApiClientID: project.ApiClientID, ClientSecret: project.ClientSecret})
-        }
-        return marketplaces;
-    }, [{ ID: NEW_PROJECT_CODE, Name: "Seed new Marketplace", ApiClientID: null, ClientSecret: null }]);
+    const [connections, setConnections] = useState<ConnectedProject[]>(init);
+    const [loading, setLoading] = useState(false);
+
+    if (!allMarketplaces.find(m => m.Id === NEW_PROJECT_CODE)) {
+        allMarketplaces.unshift({ Id: NEW_PROJECT_CODE, Name: "Seed new Marketplace" });
+    }
 
     var unConnectedProjects = allProjects.filter(p => !connections.some(cp => cp.project.id === p.id));
 
@@ -37,11 +39,11 @@ const ProjectSelectView: FC<{
 
     if (disableProjectSelect && disableMarketplaceSelect) {
         // skip project select step
-        saveAndContinue(connections);
+        onSelectProjects(connections);
     }
 
     const addNewConnection = () => {
-        setConnections(oldConnections => [...oldConnections, { project: unConnectedProjects[0], ... newMarketplace}]);
+        setConnections(oldConnections => [...oldConnections, { project: unConnectedProjects[0], marketplace: newMarketplace}]);
     }   
 
     const removeConnection = (index: number) => {
@@ -61,16 +63,26 @@ const ProjectSelectView: FC<{
     }  
 
     const setConnectionMarketplace = (index: number, marketplaceID: string) => {
-        var marketplace = allMarketplaces.find(x => x.ID === marketplaceID);
+        var marketplace = allMarketplaces.find(x => x.Id === marketplaceID);
         setConnections(oldConnections => {
             console.log(oldConnections);
             var connection = oldConnections[index];
-            var newConection = {...marketplace, project: connection.project }
+            var newConection = { marketplace, project: connection.project }
             oldConnections[index] = newConection;
             console.log([...oldConnections]);
 
             return [...oldConnections];
         });
+    }  
+
+    
+    const saveAndContinue = async () => {
+        setLoading(true);
+        try {
+            await onSelectProjects(connections);
+        } finally {
+            setLoading(false);
+        }
     }  
 
 
@@ -120,9 +132,9 @@ const ProjectSelectView: FC<{
                                                 variant="outlined"
                                                 style={{width: "210px"}}
                                                 onChange={(event) => setConnectionMarketplace(index, event.target.value as string)}
-                                                value={connection.ID}>
+                                                value={connection.marketplace.Id}>
                                                 {allMarketplaces.map(marketplace => {
-                                                    return <MenuItem key={marketplace.ID} value={marketplace.ID}>{`${marketplace.Name} (ID: "${marketplace.ID}")`}</MenuItem>
+                                                    return <MenuItem key={marketplace.Id} value={marketplace.Id}>{`${marketplace.Name} (ID: "${marketplace.Id}")`}</MenuItem>
                                                 })}
                                             </Select>
                                         </FormControl>
@@ -138,15 +150,17 @@ const ProjectSelectView: FC<{
                     { showAddProject && <VercelButton variant="primary" style={{marginLeft: "1.5rem", marginBottom: "1rem"}} onClick={addNewConnection}><FontAwesomeIcon style={{marginRight: "0.5rem"}} icon={faPlusCircle}/> Add Another Vercel Project ({unConnectedProjects.length} Remaining)</VercelButton>}
                 </div>
                 <div className="mt-5" style={{float: "right"}}>
-                    <Button
-                    variant="contained"
-                    color="secondary"
-                    type="submit"
-                    size="large"
-                    onClick={() => saveAndContinue(connections)}
-                    >
-                    Apply Changes
-                    </Button>
+                    <ProgressLoader loading={loading}>
+                        <Button
+                        variant="contained"
+                        color="secondary"
+                        type="submit"
+                        size="large"
+                        onClick={() => saveAndContinue() }
+                        >
+                        Apply Changes
+                        </Button>
+                    </ProgressLoader>
                 </div>
             </div>
         </div>

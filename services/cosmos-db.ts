@@ -1,5 +1,5 @@
 import { CosmosClient } from "@azure/cosmos";
-import { IntegrationConfiguration } from "../types/IntegrationConfiguration";
+import { VercelConfiguration } from "../types/VercelConfiguration";
 import { AES, enc } from 'crypto-js'; 
 import { COSMOS_CONFIGURATION_CONTAINER } from "./constants";
 
@@ -26,7 +26,7 @@ const client = new CosmosClient({ endpoint: COSMOSDB_ENDPOINT, key: COSMOSDB_KEY
 const db = client.database(COSMOSDB_DB_NAME);
 
 export const cosmos = {
-    GetConfiguration: async (configurationID: string): Promise<IntegrationConfiguration> => {
+    GetConfiguration: async (configurationID: string): Promise<VercelConfiguration> => {
         try {
             console.log("id:", configurationID);
             const container = await db.containers.createIfNotExists({ partitionKey: "/id", id: COSMOS_CONFIGURATION_CONTAINER });
@@ -42,7 +42,7 @@ export const cosmos = {
         }
     },
 
-    CreateConfiguration: async (configuration: IntegrationConfiguration): Promise<IntegrationConfiguration> => {
+    CreateConfiguration: async (configuration: VercelConfiguration): Promise<VercelConfiguration> => {
         try {
             var toSave = { 
                 ...configuration, 

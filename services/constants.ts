@@ -10,4 +10,10 @@ export const NEW_PROJECT_CODE = "NEW";
 
 export const COSMOS_CONFIGURATION_CONTAINER = "vercelintegrationconfigurations"
 
-export const API_CLIENT_NAME = "Buyer Middleware";
+export const API_CLIENT_NAME = "Vercel-Integration-Connector";
+
+export const ORDERCLOUD_URLS = {
+    Staging: "https://stagingapi.ordercloud.io",
+    Sandbox: "https://sandboxapi.ordercloud.io",
+    Production: "https://api.ordercloud.io",
+};

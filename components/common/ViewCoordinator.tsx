@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import * as React from "react";
 import { VercelProject } from '../../types/VercelProject';
 import { PortalAuthentication } from '@ordercloud/portal-javascript-sdk/dist/models/PortalAuthentication';
-import { IntegrationConfiguration } from '../../types/IntegrationConfiguration';
-import { API_CLIENT_NAME, ENV_VARIABLES, NEW_PROJECT_CODE } from '../../services/constants';
+import { VercelConfiguration } from '../../types/VercelConfiguration';
+import { API_CLIENT_NAME, ENV_VARIABLES, NEW_PROJECT_CODE, ORDERCLOUD_URLS } from '../../services/constants';
 import { CreateOrUpdateEnvVariables, DeleteEnvVariables } from '../../services/vercel-api';
 import { useRouter } from 'next/router';
 import Layout from './layout';
@@ -14,22 +14,17 @@ import ForgotPasswordView from './ForgotPasswordView';
 import { seed, SeedArgs } from '@ordercloud/seeding';
 import ProjectSelectView from './ProjectSelectView';
 import SeedingView from './SeedingView';
+import { OCEnvVariables } from '../../types/OCEnvVariables';
+import { ApiClients as PortalClients, Organization, Organizations } from '@ordercloud/portal-javascript-sdk';
+import { ApiClient, ApiClients, Configuration } from 'ordercloud-javascript-sdk';
+import randomstring from 'randomstring';
+
+import { ConnectedProject } from '../../types/ConnectedProject';
 
 export type View = 'SPLASH_PAGE' | 'REGISTER' | 'LOGIN' | 'FORGOT_PASS' | 'PROJECT_SELECT' | 'SEEDING';
 
-export interface ConnectedProject extends OrderCloudMarketplace {
-  project: VercelProject;
-}
-
-export interface OrderCloudMarketplace {
-  ID: string,
-  Name: string,
-  ApiClientID: string,
-  ClientSecret: string
-}
-
 export interface ViewCoordinatorProps {
-  configuration: IntegrationConfiguration;
+  configuration: VercelConfiguration;
   initialView: View;
 }
 
@@ -39,6 +34,7 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
   const [connectedProjects, setConnectedProjects] = useState<ConnectedProject[]>([]);
   const [ocToken, setOCToken] = useState<PortalAuthentication>(null)
   const [vercelProjects, setVercelProjects] = useState<VercelProject[]>(null)
+  const [ocMarketplaces, setOcMarketplaces] = useState<Organization[]>(null)
   const [logs, setLogs] = useState<string[]>([]);
   const [seedPageText, setSeedPageText] = useState<string>("We are seeding your marketplace!");
   const [view, setView] = useState<View>(initialView)
@@ -68,12 +64,10 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
   const connectProjects = (projects: VercelProject[]): ConnectedProject[] => {
     var marketplaces: ConnectedProject[] = [];
     for (var project of projects) {
-      var ID = getEnvVariable(project, ENV_VARIABLES.MRKT_ID);
+      var Id = getEnvVariable(project, ENV_VARIABLES.MRKT_ID);
       var Name = getEnvVariable(project, ENV_VARIABLES.MRKT_NAME);
-      var ApiClientID = getEnvVariable(project, ENV_VARIABLES.MRKT_API_CLIENT);
-      var ClientSecret = getEnvVariable(project, ENV_VARIABLES.MRKT_CLIENT_SECRET);
-      if (ID && Name && ApiClientID && ClientSecret) {
-        marketplaces.push({ ID, Name, ApiClientID, project, ClientSecret });
+      if (Id && Name) {
+        marketplaces.push({ project, marketplace: { Id, Name }});
       }
     }
     return marketplaces;
@@ -86,27 +80,36 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
 
   const onAuthenticate = async (auth: PortalAuthentication) => {
     setOCToken(auth);
+    var orgs = await Organizations.List({ pageSize: 100 }, { accessToken: auth.access_token });
+    setOcMarketplaces(orgs.Items);
     setView('PROJECT_SELECT');
   }
 
   const onSelectProjects = async (newConnections: ConnectedProject[]) => {
       console.log("result of selection", newConnections);
       var newMarketplace;
-      if (newConnections.some(m => m.ID === NEW_PROJECT_CODE)) {
+      if (newConnections.some(m => m.marketplace.Id === NEW_PROJECT_CODE)) {
         newMarketplace = await seedNewMarketplace();
       }
 
       try {
-        for (var selection of newConnections) {
-          var oldMrktID = getEnvVariable(selection.project, ENV_VARIABLES.MRKT_ID);
+        for (var connection of newConnections) {
+          var oldMrktID = getEnvVariable(connection.project, ENV_VARIABLES.MRKT_ID);
 
-          if (selection.ID === NEW_PROJECT_CODE) {
+          if (connection.marketplace.Id === NEW_PROJECT_CODE) {
             // Connect to the new marketplace
-            await CreateOrUpdateEnvVariables(selection.project, newMarketplace, configuration)
-          } else if (oldMrktID !== selection.ID) {
+            await CreateOrUpdateEnvVariables(connection.project, newMarketplace, configuration)
+          } else if (oldMrktID !== connection.marketplace.Id) {
             // Connect to a different, existing marketplace
-            var oldMarketplace = connectedProjects.find(m => m.ID === selection.ID);
-            await CreateOrUpdateEnvVariables(selection.project, oldMarketplace, configuration)
+            Configuration.Set({ baseApiUrl: ORDERCLOUD_URLS[connection.marketplace.Environment] });
+            var apiClient = await GetOrCreateApiClient(connection.marketplace.Id);
+            var vars = { 
+              MarketplaceID: connection.marketplace.Id,
+              MarketplaceName: connection.marketplace.Name,
+              ApiClientID: apiClient.ID,
+              ClientSecret: apiClient.ClientSecret
+            };
+            await CreateOrUpdateEnvVariables(connection.project, vars, configuration)
           } 
         }
 
@@ -121,7 +124,25 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       } 
   }
 
-  const seedNewMarketplace = async (): Promise<OrderCloudMarketplace> => {
+  const GetOrCreateApiClient = async (marketplaceID: string): Promise<ApiClient> => {
+    var token = await PortalClients.GetToken(marketplaceID, null, { accessToken: ocToken.access_token });
+    var apiClients = await ApiClients.List({ pageSize: 100}, { accessToken: token.access_token });
+    var existing = apiClients.Items.find(x => x.AppName === API_CLIENT_NAME);
+    if (existing) {
+      return existing;
+    }
+
+    return await ApiClients.Create({ 
+      Active: true,
+      AppName: API_CLIENT_NAME,
+      ClientSecret: randomstring.generate(60),
+      AllowAnyBuyer: true,
+      IsAnonBuyer: true,
+      AccessTokenDuration: 600
+    }, { accessToken: token.access_token });
+  }
+
+  const seedNewMarketplace = async (): Promise<OCEnvVariables> => {
     try {
       setView('SEEDING');
       const result = await seed({
@@ -134,8 +155,8 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       } as SeedArgs);
       var apiClient = result.apiClients.find(x => x.AppName === API_CLIENT_NAME);
       return {
-        ID: result.marketplaceID,
-        Name: result.marketplaceName,
+        MarketplaceID: result.marketplaceID,
+        MarketplaceName: result.marketplaceName,
         ApiClientID: apiClient.ID,
         ClientSecret: apiClient.ClientSecret
       };
@@ -171,10 +192,11 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       )}
       {view === 'PROJECT_SELECT' && (
         <ProjectSelectView 
-          allProjects={vercelProjects} 
+          allProjects={vercelProjects}
+          allMarketplaces={ocMarketplaces} 
           savedConnections={connectedProjects} 
           currentProjectId={configuration.currentProjectId} 
-          saveAndContinue={onSelectProjects} 
+          onSelectProjects={onSelectProjects} 
         />
       )}
       {view === 'SEEDING' && (

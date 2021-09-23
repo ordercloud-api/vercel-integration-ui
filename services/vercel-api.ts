@@ -1,26 +1,26 @@
 import axios from "axios";
-import { OrderCloudMarketplace } from "../components/common/ViewCoordinator";
-import { IntegrationConfiguration } from "../types/IntegrationConfiguration";
+import { VercelConfiguration } from "../types/VercelConfiguration";
+import { OCEnvVariables } from "../types/OCEnvVariables";
 import { VercelProject } from "../types/VercelProject";
 import { ENV_VARIABLES } from "./constants";
 
-export const CreateOrUpdateEnvVariables = async (project: VercelProject, marketplace: OrderCloudMarketplace, configuration: IntegrationConfiguration) : Promise<void> => {    
+export const CreateOrUpdateEnvVariables = async (project: VercelProject, vars: OCEnvVariables, configuration: VercelConfiguration) : Promise<void> => {    
     var toSet = [
       {
         key: ENV_VARIABLES.MRKT_API_CLIENT,
-        value: marketplace.ApiClientID
+        value: vars.ApiClientID
       },
       {
         key: ENV_VARIABLES.MRKT_ID,
-        value: marketplace.ID
+        value: vars.MarketplaceID
       },
       {
         key: ENV_VARIABLES.MRKT_NAME,
-        value: marketplace.Name
+        value: vars.MarketplaceName
       },
       {
         key: ENV_VARIABLES.MRKT_CLIENT_SECRET,
-        value: marketplace.ClientSecret
+        value: vars.ClientSecret
       },
       {
         key: ENV_VARIABLES.PROVIDER,
@@ -49,7 +49,7 @@ export const CreateOrUpdateEnvVariables = async (project: VercelProject, marketp
       await Promise.all(requests);
 }
 
-export const DeleteEnvVariables = async (project: VercelProject, configuration: IntegrationConfiguration) : Promise<void> => {
+export const DeleteEnvVariables = async (project: VercelProject, configuration: VercelConfiguration) : Promise<void> => {
     var toDelete = [
         ENV_VARIABLES.MRKT_API_CLIENT,
         ENV_VARIABLES.MRKT_ID,

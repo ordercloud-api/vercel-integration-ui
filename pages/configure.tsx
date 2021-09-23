@@ -1,17 +1,17 @@
 import { useRouter } from 'next/router'
 import * as React from "react";
 import ViewCoordinator from '../components/common/ViewCoordinator';
-import { IntegrationConfiguration } from '../types/IntegrationConfiguration';
+import { VercelConfiguration } from '../types/VercelConfiguration';
 
 // The URL of this page should be added as Configuration URL in your integration settings on Vercel
 export default function Configure() {
   const router = useRouter();
-  const [configuration, setConfiguration] = React.useState<IntegrationConfiguration>(null)
+  const [configuration, setConfiguration] = React.useState<VercelConfiguration>(null)
 
   React.useEffect(() => {
     const fetchAccessToken = async (configurationId, currentProjectId) => {
       const res = await fetch(`/api/get-configuration?configurationId=${configurationId}`)
-      const json: IntegrationConfiguration = await res.json()
+      const json: VercelConfiguration = await res.json()
       json.currentProjectId = currentProjectId;
       setConfiguration(json)
       console.log("Get Access token response", json);

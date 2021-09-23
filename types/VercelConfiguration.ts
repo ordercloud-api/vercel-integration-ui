@@ -1,4 +1,4 @@
-export interface IntegrationConfiguration {
+export interface VercelConfiguration {
     id: string;
     userId: string;
     teamId: string;

@@ -34,7 +34,7 @@ import sharedStyles from '../ordercloud-ui/SharedStyles';
   );
   
   const LoginView = (props) => {
-    const { setView, onAuthenticate } = props;
+    const { setView, onAuthenticate, doneLoading } = props;
     const classes = useStyles(props);
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
@@ -45,7 +45,7 @@ import sharedStyles from '../ordercloud-ui/SharedStyles';
       setLoading(true);
       try {
         var resp = await Auth.Login(username, password);
-        onAuthenticate(resp);
+        await onAuthenticate(resp);
       } catch (e) {
         Alert.error(e?.response?.data?.Errors[0]?.Message || "Login failed");
       } finally {
