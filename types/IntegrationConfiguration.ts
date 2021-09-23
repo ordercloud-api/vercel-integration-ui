@@ -3,7 +3,7 @@ export interface IntegrationConfiguration {
     userId: string;
     teamId: string;
     currentProjectId?: string; // often null
-    vercelAccessToken: string;
+    vercelAccessToken: string; // this is not saved in cosmos. An encrypted version of it is
     createdAt: number;
     updatedAt: number;
 }

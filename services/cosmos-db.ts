@@ -1,11 +1,14 @@
 import { CosmosClient } from "@azure/cosmos";
 import { IntegrationConfiguration } from "../types/IntegrationConfiguration";
+import { AES, enc } from 'crypto-js'; 
 import { COSMOS_CONFIGURATION_CONTAINER } from "./constants";
 
 const {
     COSMOSDB_DB_NAME,
     COSMOSDB_ENDPOINT,
     COSMOSDB_KEY,
+    TOKEN_ENCRYPT_KEY,
+    ENV_NAME
 } = process.env;
 
 if (
@@ -20,16 +23,20 @@ if (
   
 
 const client = new CosmosClient({ endpoint: COSMOSDB_ENDPOINT, key: COSMOSDB_KEY });
-
-const configurations = client.database(COSMOSDB_DB_NAME).container(COSMOS_CONFIGURATION_CONTAINER);
+const db = client.database(COSMOSDB_DB_NAME);
 
 export const cosmos = {
     GetConfiguration: async (configurationID: string): Promise<IntegrationConfiguration> => {
         try {
             console.log("id:", configurationID);
-            var resp = await configurations.items.query(`SELECT * from c where c.id = '${configurationID}'`).fetchAll();
-            console.log("Found configuration in CosmosDB:", resp.resources[0])
-            return resp.resources[0];
+            const container = await db.containers.createIfNotExists({ partitionKey: "/id", id: COSMOS_CONFIGURATION_CONTAINER });
+            var data = await container.container.items.query(`SELECT * from c where c.id = '${configurationID}'`).fetchAll();
+            var configuration = data.resources[0];
+            return {
+                ...configuration,
+                vercelAccessToken: AES.decrypt(configuration.encryptedVercelToken, TOKEN_ENCRYPT_KEY).toString(enc.Utf8),
+                encryptedVercelToken: null
+            };
         } catch (e) {
             console.log("Cosmos Error", e);
         }
@@ -37,10 +44,18 @@ export const cosmos = {
 
     CreateConfiguration: async (configuration: IntegrationConfiguration): Promise<IntegrationConfiguration> => {
         try {
-             var resp = await configurations.items.create(configuration);
-             return resp.resource;
+            var toSave = { 
+                ...configuration, 
+                env: ENV_NAME, 
+                vercelAccessToken: null, 
+                encryptedVercelToken: AES.encrypt(configuration.vercelAccessToken, TOKEN_ENCRYPT_KEY).toString() 
+            };
+            const container = await db.containers.createIfNotExists({ partitionKey: "/id", id: COSMOS_CONFIGURATION_CONTAINER });
+            var data = await container.container.items.create(toSave);
+            console.log("Created configuration in CosmosDB:", data.item);
+            return configuration;   
          } catch (e) {
-             console.log("Cosmos Error", e);
+            console.log("Cosmos Error", e);
          }
     }
 }
