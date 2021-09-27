@@ -91,6 +91,7 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       if (newConnections.some(m => m.marketplace.Id === NEW_PROJECT_CODE)) {
         newMarketplace = await seedNewMarketplace();
       }
+      console.log("newMarketplace", newMarketplace);
 
       try {
         for (var connection of newConnections) {
@@ -153,6 +154,8 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
           addLog(message);
         }
       } as SeedArgs);
+      console.log("seed result", result);
+
       var apiClient = result.apiClients.find(x => x.AppName === API_CLIENT_NAME);
       return {
         MarketplaceID: result.marketplaceID,

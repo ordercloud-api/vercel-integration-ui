@@ -19,7 +19,7 @@ if (
     throw new Error(
       'One or multiple required environment variables required for cosmosdb are missing'
     )
-  }
+}
   
 
 const client = new CosmosClient({ endpoint: COSMOSDB_ENDPOINT, key: COSMOSDB_KEY });
@@ -41,7 +41,14 @@ export const cosmos = {
             console.log("Cosmos Error", e);
         }
     },
-
+    DeleteConfiguration: async (configurationID: string): Promise<void> => {
+        try {
+            const container = await db.containers.createIfNotExists({ partitionKey: "/id", id: COSMOS_CONFIGURATION_CONTAINER });
+            await container.container.item(configurationID, configurationID).delete();
+        } catch (e) {
+            console.log("Cosmos Error", e);
+        }
+    },
     CreateConfiguration: async (configuration: VercelConfiguration): Promise<VercelConfiguration> => {
         try {
             var toSave = { 
