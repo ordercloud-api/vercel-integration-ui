@@ -44,7 +44,9 @@ export const cosmos = {
     DeleteConfiguration: async (configurationID: string): Promise<void> => {
         try {
             const container = await db.containers.createIfNotExists({ partitionKey: "/id", id: COSMOS_CONFIGURATION_CONTAINER });
+            console.log("id", configurationID)
             await container.container.item(configurationID, configurationID).delete();
+            console.log("done")
         } catch (e) {
             console.log("Cosmos Error", e);
         }

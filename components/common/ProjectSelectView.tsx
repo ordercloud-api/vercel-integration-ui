@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FormControl, Button, Grid, MenuItem, Select } from '@material-ui/core';
-import React, { FC, useState } from 'react'
+import { FormControl, Button, Grid, MenuItem, Select, InputLabel } from '@material-ui/core';
+import React, { FC, useEffect, useState } from 'react'
 import { NEW_PROJECT_CODE } from '../../services/constants';
 import { VercelProject } from '../../types/VercelProject'
 import { Button as VercelButton } from '../vercel-ui'
@@ -17,15 +17,17 @@ const ProjectSelectView: FC<{
   allMarketplaces: Organization[],
   currentProjectId: string,
   savedConnections: ConnectedProject[],
-}> = ({ onSelectProjects, allProjects, allMarketplaces, currentProjectId, savedConnections }) => {    
+}> = ({ onSelectProjects, allProjects, allMarketplaces, currentProjectId, savedConnections }) => {
+
     var selectedProject = allProjects.find(p => p.id === currentProjectId);
-    selectedProject = selectedProject || allProjects[0];       
+    selectedProject = selectedProject || allProjects[0];
 
     var newMarketplace = { Id: NEW_PROJECT_CODE, Name: "Seed new Marketplace" };
     var init = savedConnections.length > 0 ? [...savedConnections] : [{ project: selectedProject, marketplace: newMarketplace}];
 
     const [connections, setConnections] = useState<ConnectedProject[]>(init);
     const [loading, setLoading] = useState(false);
+    const [useMobileView, setUseMobileView] = useState(false);
 
     if (!allMarketplaces.find(m => m.Id === NEW_PROJECT_CODE)) {
         allMarketplaces.unshift({ Id: NEW_PROJECT_CODE, Name: "Seed new Marketplace" });
@@ -41,6 +43,15 @@ const ProjectSelectView: FC<{
         // skip project select step
         onSelectProjects(connections);
     }
+
+    useEffect(() => {
+        function handleResize() {
+            setUseMobileView(window.innerWidth < 640);
+        }
+    
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
 
     const addNewConnection = () => {
         setConnections(oldConnections => [...oldConnections, { project: unConnectedProjects[0], marketplace: newMarketplace}]);
@@ -92,59 +103,101 @@ const ProjectSelectView: FC<{
     return (
         <div className="flex justify-center min-h-screen overflow-visible font-sans antialiased bg-primary-100">
             <div className="py-6 w-full md:max-w-3xl md:mt-8">
-                <img src='/oc_banner_logo.svg' style={{width: "200px", paddingBottom: "1rem"}} alt='OrderCloud'/>
+                <img src='/oc_banner_logo.svg' style={{width: "350px", paddingBottom: "1rem", paddingLeft: "1.5rem"}} alt='OrderCloud'/>
                 <div className="rounded border border-primary-200 bg-white">
                     <div style={{padding: "1.5rem"}}>
                         <h4 style={{fontSize: "1.25rem", lineHeight: "1.75rem", fontWeight: 600}}>Connection Details</h4>
                         <p style={{fontSize: "0.875rem", lineHeight: "1.25rem", marginTop: "0.75rem"}}>A new deployment is required for changes to take effect.</p>
                         <div style={{marginTop: "1.5rem"}}>
-                        <Grid container>
+                        { !useMobileView &&
                             <Grid container>
-                                <Grid item xs>
-                                    <div><b>Vercel Project</b></div>
+                                <Grid container>
+                                    <Grid item xs>
+                                        <div><b>Vercel Project</b></div>
+                                    </Grid>
+                                    <Grid item xs style={{marginLeft: "3rem"}}>
+                                        <div><b>OrderCloud Marketplace</b></div>
+                                    </Grid>
                                 </Grid>
-                                <Grid item xs style={{marginLeft: "3rem"}}>
-                                    <div><b>OrderCloud Marketplace</b></div>
-                                </Grid>
+                                {connections.map((connection, index) => {
+                                    return <Grid container key={index} style={{marginTop: "0.75rem"}}>
+                                        <Grid item xs>
+                                            <FormControl>
+                                                <Select 
+                                                    disabled={disableProjectSelect}
+                                                    variant="outlined"
+                                                    onChange={(event) => setConnectionProject(index, event.target.value as string)}
+                                                    style={{width: "210px"}}
+                                                    value={connection.project.id}>
+                                                    {allProjects.map(project => {
+                                                        var disabled = project.id !== connection.project.id && connections.some(c => c.project.id === project.id);
+                                                        return <MenuItem key={project.id} disabled={disabled} value={project.id}>{project.name}</MenuItem>
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+                                        <Grid item xs style={{textAlign: "center", marginTop: '0.75rem'}}>&#x2190; links to &#x2192;</Grid>
+                                        <Grid item xs>
+                                            <FormControl>
+                                                <Select
+                                                    disabled={disableMarketplaceSelect}
+                                                    variant="outlined"
+                                                    style={{width: "210px"}}
+                                                    onChange={(event) => setConnectionMarketplace(index, event.target.value as string)}
+                                                    value={connection.marketplace.Id}>
+                                                    {allMarketplaces.map(marketplace => {
+                                                        return <MenuItem key={marketplace.Id} value={marketplace.Id}>{`${marketplace.Name} (ID: "${marketplace.Id}")`}</MenuItem>
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+                                        <Grid item xs={1} style={{marginTop: "1rem", marginLeft: "1.5rem", cursor: "pointer"}}>
+                                            { index !== 0 &&  <div onClick={() => removeConnection(index)}><FontAwesomeIcon size="lg" icon={faTimes}/></div> }            
+                                        </Grid>
+                                    </Grid>
+                                })}
                             </Grid>
-                            {connections.map((connection, index) => {
-                                return <Grid container key={index} style={{marginTop: "0.75rem"}}>
-                                    <Grid item xs>
-                                        <FormControl>
-                                            <Select 
-                                                disabled={disableProjectSelect}
-                                                variant="outlined"
-                                                onChange={(event) => setConnectionProject(index, event.target.value as string)}
-                                                style={{width: "210px"}}
-                                                value={connection.project.id}>
-                                                {allProjects.map(project => {
-                                                    var disabled = project.id !== connection.project.id && connections.some(c => c.project.id === project.id);
-                                                    return <MenuItem key={project.id} disabled={disabled} value={project.id}>{project.name}</MenuItem>
-                                                })}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs style={{textAlign: "center", marginTop: '0.75rem'}}>&#x2190; links to &#x2192;</Grid>
-                                    <Grid item xs>
-                                        <FormControl>
-                                            <Select
-                                                disabled={disableMarketplaceSelect}
-                                                variant="outlined"
-                                                style={{width: "210px"}}
-                                                onChange={(event) => setConnectionMarketplace(index, event.target.value as string)}
-                                                value={connection.marketplace.Id}>
-                                                {allMarketplaces.map(marketplace => {
-                                                    return <MenuItem key={marketplace.Id} value={marketplace.Id}>{`${marketplace.Name} (ID: "${marketplace.Id}")`}</MenuItem>
-                                                })}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={1} style={{marginTop: "1rem", marginLeft: "1.5rem", cursor: "pointer"}}>
-                                        { index !== 0 &&  <div onClick={() => removeConnection(index)}><FontAwesomeIcon size="lg" icon={faTimes}/></div> }            
-                                    </Grid>
-                                </Grid>
-                            })}
-                        </Grid>
+                        }
+                        { useMobileView && 
+                            <div>
+                                { connections.map((connection, index) => {
+                                    return <div className="rounded border border-primary-200 bg-white m-4">
+                                        <div style={{margin: "1.25rem"}}>
+                                            <div><b>Vercel Project</b></div>
+                                            <FormControl>
+                                                <Select 
+                                                    disabled={disableProjectSelect}
+                                                    variant="outlined"
+                                                    onChange={(event) => setConnectionProject(index, event.target.value as string)}
+                                                    style={{width: "210px"}}
+                                                    value={connection.project.id}>
+                                                    {allProjects.map(project => {
+                                                        var disabled = project.id !== connection.project.id && connections.some(c => c.project.id === project.id);
+                                                        return <MenuItem key={project.id} disabled={disabled} value={project.id}>{project.name}</MenuItem>
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+                                        </div>
+                                        <div style={{margin: "1.25rem"}}>
+                                            <div><b>OrderCloud Marketplace</b></div>
+                                            <FormControl >
+                                                <Select
+                                                    disabled={disableMarketplaceSelect}
+                                                    variant="outlined"
+                                                    style={{width: "210px"}}
+                                                    onChange={(event) => setConnectionMarketplace(index, event.target.value as string)}
+                                                    value={connection.marketplace.Id}>
+                                                    {allMarketplaces.map(marketplace => {
+                                                        return <MenuItem key={marketplace.Id} value={marketplace.Id}>{`${marketplace.Name} (ID: "${marketplace.Id}")`}</MenuItem>
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+                                        </div>
+                                        { index !== 0 && <div style={{margin: "1.25rem", color:"red"}} onClick={() => removeConnection(index)}>Remove</div> }
+                                    </div>
+                                })}
+                            </div>
+                        }   
                         </div>
                     </div>
                     { showAddProject && <VercelButton variant="primary" style={{marginLeft: "1.5rem", marginBottom: "1rem"}} onClick={addNewConnection}><FontAwesomeIcon style={{marginRight: "0.5rem"}} icon={faPlusCircle}/> Add Another Vercel Project ({unConnectedProjects.length} Remaining)</VercelButton>}

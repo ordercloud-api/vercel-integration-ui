@@ -7,8 +7,8 @@ import { ENV_VARIABLES } from "./constants";
 export const CreateOrUpdateEnvVariables = async (project: VercelProject, vars: OCEnvVariables, configuration: VercelConfiguration) : Promise<void> => {    
     var toSet = [
       {
-        key: ENV_VARIABLES.MRKT_API_CLIENT,
-        value: vars.ApiClientID
+        key: ENV_VARIABLES.MIDDLEWARE_CLIENT_ID,
+        value: vars.MiddlewareClientID
       },
       {
         key: ENV_VARIABLES.MRKT_ID,
@@ -19,8 +19,12 @@ export const CreateOrUpdateEnvVariables = async (project: VercelProject, vars: O
         value: vars.MarketplaceName
       },
       {
-        key: ENV_VARIABLES.MRKT_CLIENT_SECRET,
-        value: vars.ClientSecret
+        key: ENV_VARIABLES.MIDDLEWARE_CLIENT_SECRET,
+        value: vars.MiddlewareClientSecret
+      },
+      {
+        key: ENV_VARIABLES.STOREFRONT_CLIENT_ID,
+        value: vars.StoreFrontClientID
       },
       {
         key: ENV_VARIABLES.PROVIDER,
@@ -51,11 +55,12 @@ export const CreateOrUpdateEnvVariables = async (project: VercelProject, vars: O
 
 export const DeleteEnvVariables = async (project: VercelProject, configuration: VercelConfiguration) : Promise<void> => {
     var toDelete = [
-        ENV_VARIABLES.MRKT_API_CLIENT,
+        ENV_VARIABLES.STOREFRONT_CLIENT_ID,
+        ENV_VARIABLES.MIDDLEWARE_CLIENT_ID,
+        ENV_VARIABLES.MIDDLEWARE_CLIENT_SECRET,
         ENV_VARIABLES.MRKT_ID,
         ENV_VARIABLES.MRKT_NAME,
         ENV_VARIABLES.PROVIDER,
-        ENV_VARIABLES.MRKT_CLIENT_SECRET
     ];    
     var requests = toDelete.map(key => {
         var varID = project.env.find(e => e.key === key).id;

@@ -3,7 +3,7 @@ import * as React from "react";
 import { VercelProject } from '../../types/VercelProject';
 import { PortalAuthentication } from '@ordercloud/portal-javascript-sdk/dist/models/PortalAuthentication';
 import { VercelConfiguration } from '../../types/VercelConfiguration';
-import { API_CLIENT_NAME, ENV_VARIABLES, NEW_PROJECT_CODE, ORDERCLOUD_URLS } from '../../services/constants';
+import { ENV_VARIABLES, MIDDLEWARE_API_CLIENT_NAME, NEW_PROJECT_CODE, ORDERCLOUD_URLS, STOREFRONT_API_CLIENT_NAME } from '../../services/constants';
 import { CreateOrUpdateEnvVariables, DeleteEnvVariables } from '../../services/vercel-api';
 import { useRouter } from 'next/router';
 import Layout from './layout';
@@ -103,12 +103,13 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
           } else if (oldMrktID !== connection.marketplace.Id) {
             // Connect to a different, existing marketplace
             Configuration.Set({ baseApiUrl: ORDERCLOUD_URLS[connection.marketplace.Environment] });
-            var apiClient = await GetOrCreateApiClient(connection.marketplace.Id);
-            var vars = { 
+            var apiClients = await GetOrCreateApiClients(connection.marketplace.Id);
+            var vars: OCEnvVariables  = { 
               MarketplaceID: connection.marketplace.Id,
               MarketplaceName: connection.marketplace.Name,
-              ApiClientID: apiClient.ID,
-              ClientSecret: apiClient.ClientSecret
+              MiddlewareClientID: apiClients.middleware.ID,
+              MiddlewareClientSecret: apiClients.middleware.ClientSecret,
+              StoreFrontClientID: apiClients.storefront.ID
             };
             await CreateOrUpdateEnvVariables(connection.project, vars, configuration)
           } 
@@ -125,22 +126,33 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       } 
   }
 
-  const GetOrCreateApiClient = async (marketplaceID: string): Promise<ApiClient> => {
+  const GetOrCreateApiClients = async (marketplaceID: string): Promise<{storefront: ApiClient, middleware: ApiClient}> => {
     var token = await PortalClients.GetToken(marketplaceID, null, { accessToken: ocToken.access_token });
     var apiClients = await ApiClients.List({ pageSize: 100}, { accessToken: token.access_token });
-    var existing = apiClients.Items.find(x => x.AppName === API_CLIENT_NAME);
-    if (existing) {
-      return existing;
+    var middleware = apiClients.Items.find(x => x.AppName === MIDDLEWARE_API_CLIENT_NAME);
+    var storefront = apiClients.Items.find(x => x.AppName === STOREFRONT_API_CLIENT_NAME);
+    if (!middleware) {
+      middleware = await ApiClients.Create({ 
+        Active: true,
+        AppName: MIDDLEWARE_API_CLIENT_NAME,
+        ClientSecret: randomstring.generate(60),
+        AccessTokenDuration: 600,
+        RefreshTokenDuration: 43200
+      }, { accessToken: token.access_token });
     }
 
-    return await ApiClients.Create({ 
-      Active: true,
-      AppName: API_CLIENT_NAME,
-      ClientSecret: randomstring.generate(60),
-      AllowAnyBuyer: true,
-      IsAnonBuyer: true,
-      AccessTokenDuration: 600
-    }, { accessToken: token.access_token });
+    if (!storefront) {
+      storefront = await ApiClients.Create({ 
+        Active: true,
+        AppName: STOREFRONT_API_CLIENT_NAME,
+        AllowAnyBuyer: true,
+        IsAnonBuyer: true,
+        AccessTokenDuration: 600,
+        RefreshTokenDuration: 43200
+      }, { accessToken: token.access_token });
+    }
+
+    return { storefront, middleware}
   }
 
   const seedNewMarketplace = async (): Promise<OCEnvVariables> => {
@@ -156,12 +168,14 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       } as SeedArgs);
       console.log("seed result", result);
 
-      var apiClient = result.apiClients.find(x => x.AppName === API_CLIENT_NAME);
+      var middleware  = result.apiClients.find(x => x.AppName === MIDDLEWARE_API_CLIENT_NAME);
+      var storefront = result.apiClients.find(x => x.AppName === STOREFRONT_API_CLIENT_NAME);
       return {
         MarketplaceID: result.marketplaceID,
         MarketplaceName: result.marketplaceName,
-        ApiClientID: apiClient.ID,
-        ClientSecret: apiClient.ClientSecret
+        StoreFrontClientID: storefront.ID,
+        MiddlewareClientID: middleware.ID,
+        MiddlewareClientSecret: middleware.ClientSecret
       };
     } catch (err) {
       console.log(err)
@@ -193,7 +207,7 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       {view === 'FORGOT_PASS' && (
         <ForgotPasswordView setView={setView} />
       )}
-      {view === 'PROJECT_SELECT' && (
+      {view === 'PROJECT_SELECT' && vercelProjects && (
         <ProjectSelectView 
           allProjects={vercelProjects}
           allMarketplaces={ocMarketplaces} 
