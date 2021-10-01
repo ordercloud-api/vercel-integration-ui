@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FormControl, Button, Grid, MenuItem, Select, InputLabel } from '@material-ui/core';
+import { FormControl, Button, Grid, MenuItem, Select } from '@material-ui/core';
 import React, { FC, useEffect, useState } from 'react'
 import { NEW_PROJECT_CODE } from '../../services/constants';
 import { VercelProject } from '../../types/VercelProject'
@@ -20,10 +20,11 @@ const ProjectSelectView: FC<{
 }> = ({ onSelectProjects, allProjects, allMarketplaces, currentProjectId, savedConnections }) => {
 
     var selectedProject = allProjects.find(p => p.id === currentProjectId);
+
     selectedProject = selectedProject || allProjects[0];
 
     var newMarketplace = { Id: NEW_PROJECT_CODE, Name: "Seed new Marketplace" };
-    var init = savedConnections.length > 0 ? [...savedConnections] : [{ project: selectedProject, marketplace: newMarketplace}];
+    var init = (savedConnections.length > 0 && !currentProjectId) ? [...savedConnections] : [{ project: selectedProject, marketplace: newMarketplace}];
 
     const [connections, setConnections] = useState<ConnectedProject[]>(init);
     const [loading, setLoading] = useState(false);
