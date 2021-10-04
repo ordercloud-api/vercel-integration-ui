@@ -116,19 +116,18 @@ const ProjectSelectView: FC<{
                                     <Grid item xs>
                                         <div><b>Vercel Project</b></div>
                                     </Grid>
-                                    <Grid item xs style={{marginLeft: "3rem"}}>
+                                    <Grid item xs style={{marginLeft: "5.5rem"}}>
                                         <div><b>OrderCloud Marketplace</b></div>
                                     </Grid>
                                 </Grid>
                                 {connections.map((connection, index) => {
                                     return <Grid container key={index} style={{marginTop: "0.75rem"}}>
-                                        <Grid item xs>
                                             <FormControl>
                                                 <Select 
                                                     disabled={disableProjectSelect}
                                                     variant="outlined"
                                                     onChange={(event) => setConnectionProject(index, event.target.value as string)}
-                                                    style={{width: "210px"}}
+                                                    style={{width: "235px"}}
                                                     value={connection.project.id}>
                                                     {allProjects.map(project => {
                                                         var disabled = project.id !== connection.project.id && connections.some(c => c.project.id === project.id);
@@ -136,14 +135,14 @@ const ProjectSelectView: FC<{
                                                     })}
                                                 </Select>
                                             </FormControl>
-                                        </Grid>
-                                        <Grid item xs style={{textAlign: "center", marginTop: '0.75rem'}}>&#x2190; links to &#x2192;</Grid>
-                                        <Grid item xs>
+                                        <div style={{textAlign: "center", marginTop: '0.75rem', marginLeft: "1rem",  marginRight: "1rem"}}>
+                                            &#x2190; links to &#x2192;
+                                        </div>
                                             <FormControl>
                                                 <Select
                                                     disabled={disableMarketplaceSelect}
                                                     variant="outlined"
-                                                    style={{width: "210px"}}
+                                                    style={{width: "235px"}}
                                                     onChange={(event) => setConnectionMarketplace(index, event.target.value as string)}
                                                     value={connection.marketplace.Id}>
                                                     {allMarketplaces.map(marketplace => {
@@ -151,10 +150,9 @@ const ProjectSelectView: FC<{
                                                     })}
                                                 </Select>
                                             </FormControl>
-                                        </Grid>
-                                        <Grid item xs={1} style={{marginTop: "1rem", marginLeft: "1.5rem", cursor: "pointer"}}>
+                                        <div style={{marginTop: "1rem", marginLeft: "1.1rem", cursor: "pointer"}}>
                                             { index !== 0 &&  <div onClick={() => removeConnection(index)}><FontAwesomeIcon size="lg" icon={faTimes}/></div> }            
-                                        </Grid>
+                                        </div>
                                     </Grid>
                                 })}
                             </Grid>
@@ -194,7 +192,7 @@ const ProjectSelectView: FC<{
                                                 </Select>
                                             </FormControl>
                                         </div>
-                                        { index !== 0 && <div style={{margin: "1.25rem", color:"red"}} onClick={() => removeConnection(index)}>Remove</div> }
+                                        { index !== 0 && <div style={{margin: "1.1rem", color:"red"}} onClick={() => removeConnection(index)}>Remove</div> }
                                     </div>
                                 })}
                             </div>
