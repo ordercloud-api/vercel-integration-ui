@@ -1,14 +1,6 @@
-# Vercel Example Integration
+# OrderCloud to Vercel Integration
 
-This app is an example integration, built with Next.js.
-
-It shows:
-
-- how to exchange the `code` for an `access_token` to interact with the API
-- how to use the API to display all projects for the current user or team
-
-
-![image](https://user-images.githubusercontent.com/7249920/110459590-7389e500-80cd-11eb-9258-6d6d229c7a50.png)
+View this integration and install it at [https://vercel.com/integrations/ordercloud](https://vercel.com/integrations/ordercloud)
 
 
 ## Run this example
@@ -57,8 +49,3 @@ Now your example integration is running on `http://localhost:3000`. Click on "Vi
 6. The user sees a list of projects. This would be the step to provide additional information and allow the user to link projects to your own resources.
 7. The user clicks on "Redirect me back to Vercel" to close the popup and complete the installation on Vercel. In your real integration, this should be done automatically after you collected all information you need, to save the user some clicks.
 
-
-
-**Important note:**
-
-Please make sure, that you provide the `teamId` as a query parameter while interacting with the API. To determine if you have to add a `teamId` to API calls, see the response after exchanging the `code ` for an `access_token`. See the docs for [accessing resources owned by a team](https://vercel.com/docs/api#api-basics/authentication/accessing-resources-owned-by-a-team).
