@@ -136,6 +136,7 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
         Active: true,
         AppName: MIDDLEWARE_API_CLIENT_NAME,
         ClientSecret: randomstring.generate(60),
+        AllowSeller: true,
         AccessTokenDuration: 600,
         RefreshTokenDuration: 43200
       }, { accessToken: token.access_token });
