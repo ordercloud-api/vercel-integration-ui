@@ -28,7 +28,7 @@ export const CreateOrUpdateEnvVariables = async (project: VercelProject, vars: O
       },
       {
         key: ENV_VARIABLES.PROVIDER,
-        value: "ordercloud"
+        value: "@vercel/commerce-ordercloud"
       }
     ];
     var requests = toSet.map(varToSet => {
