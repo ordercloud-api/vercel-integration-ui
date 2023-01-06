@@ -92,7 +92,7 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       if (newConnections.some(m => m.marketplace.Id === NEW_PROJECT_CODE)) {
         const numExistingSandboxMarketplaces = ocMarketplaces.filter(x => x.Environment === SANDBOX_ENV_CODE).length;
         if (numExistingSandboxMarketplaces >= LIMIT_ON_SANDBOX_MARKETPLACES) {
-          Alert.error(`You cannot create a new sandbox marketplace here because you are already at OrderCloud's limit of ${LIMIT_ON_SANDBOX_MARKETPLACES}. Consider deleting one.`);
+          Alert.error(`You cannot create a new sandbox marketplace here because you are already the owner of ${LIMIT_ON_SANDBOX_MARKETPLACES} - OrderCloud's limit. Consider deleting one.`);
           return;
         }
         newMarketplace = await seedNewMarketplace();
