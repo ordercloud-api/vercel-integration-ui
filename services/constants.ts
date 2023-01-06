@@ -19,3 +19,6 @@ export const ORDERCLOUD_URLS = {
     Sandbox: "https://sandboxapi.ordercloud.io",
     Production: "https://api.ordercloud.io",
 };
+
+export const LIMIT_ON_SANDBOX_MARKETPLACES = 5;
+export const SANDBOX_ENV_CODE = "Sandbox";

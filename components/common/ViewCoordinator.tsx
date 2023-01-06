@@ -3,7 +3,7 @@ import * as React from "react";
 import { VercelProject } from '../../types/VercelProject';
 import { PortalAuthentication } from '@ordercloud/portal-javascript-sdk/dist/models/PortalAuthentication';
 import { VercelConfiguration } from '../../types/VercelConfiguration';
-import { ENV_VARIABLES, MIDDLEWARE_API_CLIENT_NAME, NEW_PROJECT_CODE, ORDERCLOUD_URLS, STOREFRONT_API_CLIENT_NAME } from '../../services/constants';
+import { ENV_VARIABLES, LIMIT_ON_SANDBOX_MARKETPLACES, MIDDLEWARE_API_CLIENT_NAME, NEW_PROJECT_CODE, ORDERCLOUD_URLS, SANDBOX_ENV_CODE, STOREFRONT_API_CLIENT_NAME } from '../../services/constants';
 import { CreateOrUpdateEnvVariables, DeleteEnvVariables } from '../../services/vercel-api';
 import { useRouter } from 'next/router';
 import Layout from './layout';
@@ -20,6 +20,7 @@ import { ApiClient, ApiClients, Configuration } from 'ordercloud-javascript-sdk'
 import randomstring from 'randomstring';
 
 import { ConnectedProject } from '../../types/ConnectedProject';
+import { Alert } from '../ordercloud-ui/AlertContainer';
 
 export type View = 'SPLASH_PAGE' | 'REGISTER' | 'LOGIN' | 'FORGOT_PASS' | 'PROJECT_SELECT' | 'SEEDING';
 
@@ -89,6 +90,11 @@ export default function ViewCoordinator(props: ViewCoordinatorProps) {
       console.log("result of selection", newConnections);
       var newMarketplace;
       if (newConnections.some(m => m.marketplace.Id === NEW_PROJECT_CODE)) {
+        const numExistingSandboxMarketplaces = ocMarketplaces.filter(x => x.Environment === SANDBOX_ENV_CODE).length;
+        if (numExistingSandboxMarketplaces >= LIMIT_ON_SANDBOX_MARKETPLACES) {
+          Alert.error(`You cannot create a new sandbox marketplace here because you are already at OrderCloud's limit of ${LIMIT_ON_SANDBOX_MARKETPLACES}. Consider deleting one.`);
+          return;
+        }
         newMarketplace = await seedNewMarketplace();
       }
       console.log("newMarketplace", newMarketplace);
